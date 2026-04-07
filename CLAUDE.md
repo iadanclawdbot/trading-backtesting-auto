@@ -126,6 +126,32 @@ Cuando ocurre un error:
 
 Al completar un ítem: marcarlo `[x]`. Al descubrir algo nuevo: agregarlo. Al terminar la sesión: actualizar el estado del sistema en la tabla superior de TASK.md.
 
+**6. Actualizar CHANGELOG.md antes de cada push y al cerrar sesión**
+
+`CHANGELOG.md` está en la raíz del repo. Es el historial de sesiones de trabajo — diferente de `backend/docs/changelog.md` que documenta la evolución técnica del sistema AutoLab.
+
+Formato de entrada en CHANGELOG.md:
+```markdown
+## YYYY-MM-DD — Título descriptivo de la sesión
+
+### Contexto
+[Por qué se abrió esta sesión, qué se quería resolver]
+
+### Completado
+[Lista de cambios con commit IDs cuando aplica]
+
+### Pendiente al cierre
+[Ítems que quedaron abiertos — deben reflejar TASK.md]
+
+### Estado del sistema al cierre
+[Tabla con estado de los componentes clave]
+```
+
+**Cuándo actualizar:**
+- Antes de cada `git push` → agregar los cambios del push a la entrada activa
+- Al cerrar la sesión → completar la entrada con "Pendiente al cierre" y "Estado del sistema"
+- Si la sesión es larga → se puede tener una entrada abierta e ir completándola durante el día
+
 ---
 
 ## The Self-Improvement Loop

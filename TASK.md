@@ -83,29 +83,27 @@ Hacer en orden. Bloquean todo lo demás.
 
 ## 🟠 CORTO PLAZO — Resolver el estancamiento del ciclo autónomo
 
-El sistema dejó de mejorar resultados. Diagnosticar antes de proponer soluciones.
+**DIAGNÓSTICO COMPLETADO (2026-04-07)** — 3 causas raíz identificadas:
 
-- [ ] **Paso 1 — Diagnóstico con Opus** (`backend/skills/skill_opus_analyst.md`)
+**RCA-1: Contexto contaminado ✅ RESUELTO**
+- 13/50 top results tenían WR=100% (artefacto `breakeven_after_r=0` en ema_crossover y vwap)
+- Fix: filtro `win_rate < 95.0` en `/status` (best_oos) y `/context` (top_n)
 
-  ```bash
-  curl https://autolab-api.dantelujan.online/context?top_n=50
-  curl https://autolab-api.dantelujan.online/learnings
-  ```
+**RCA-2: Params fantasma silenciosos ✅ RESUELTO**
+- LLM generaba `stagger_orders`, `funding_filter`, `polymarket_threshold`, etc. que no existen en el motor
+- Motor los ignoraba → runs idénticos, learnings falsos sobre params fantasma
+- Fix: strip de ghost params en `/hypothesize` antes de dedup → dedup ahora funciona sobre params reales
 
-  Responder: ¿espacio paramétrico agotado? ¿deduplicación muy agresiva? ¿LLM sin diversidad?
-- [ ] **Opción A — Ampliar PARAMETER_SPACE** en `backend/src/autolab_fitness.py`
+**RCA-3: mean_reversion excluida del pipeline ✅ RESUELTO**
+- Estaba en `ENABLED_STRATEGIES` pero no en `REQUIRED`/prompt de `/hypothesize` → LLM nunca la generaba
+- Fix: agregada a REQUIRED, VALID_RANGES y prompt de `/hypothesize`
 
-  - Rangos más amplios o parámetros nuevos (`rsi_entry_filter`, `use_funding_filter`)
-- [ ] **Opción B — Activar `mean_reversion`** en el pipeline
-
-  - Motor existe en `backend/backtesting/motor_base.py`
-  - Agregar a `ENABLED_STRATEGIES` en `autolab_fitness.py`
-- [ ] **Opción C — Extender datos históricos a 2022-2023** (bear market)
-
-  - Modifica `backend/backtesting/fase1_datos.py` para descargar años anteriores
-- [ ] **Opción D — Separar fitness de exploración vs campeón**
-
-  - El umbral 1.193 es muy alto para exploración — frenar la búsqueda
+- [x] Diagnóstico completado con evidencia numérica (2026-04-07)
+- [x] Fix RCA-1: filtro win_rate en /status y /context (`autolab_api.py`)
+- [x] Fix RCA-2: strip ghost params en /hypothesize (`autolab_api.py`)
+- [x] Fix RCA-3: mean_reversion habilitada en /hypothesize (`autolab_api.py`)
+- [ ] **Deploy en Coolify** — `git push` hecho, falta redeploy en Coolify para activar los fixes
+- [ ] **Verificar** — 24h después del deploy, revisar learnings para ver mean_reversion y params limpios
 
 ---
 
@@ -128,9 +126,9 @@ El sistema dejó de mejorar resultados. Diagnosticar antes de proponer solucione
 
 ## 🟢 LIMPIEZA — Baja prioridad
 
-- [ ] **Fix `/status`** — Sharpe 4.189 WR 100% es artifact de runs viejos (`breakeven_after_r=0`)
+- [x] **Fix `/status` y `/context`** — Sharpe 4.189 WR 100% era artifact de `breakeven_after_r=0`
 
-  - Filtrar: `WHERE total_trades >= 15 AND win_rate < 0.95`
+  - Filtro agregado: `AND win_rate < 95.0` en `/status` y `/context`
   - Archivo: `backend/src/autolab_api.py`
 - [ ] **Fix benchmark en `generar_batch_report.py`**
 

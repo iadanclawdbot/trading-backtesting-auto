@@ -172,11 +172,12 @@ def get_status():
         """)
         queue = {row["status"]: row["cnt"] for row in cur.fetchall()}
 
-        # Benchmark: mejor run OOS de todos los tiempos
+        # Benchmark: mejor run OOS real (excluye WR=100% — artefacto breakeven_after_r=0)
         cur.execute("""
             SELECT strategy, sharpe_ratio, total_trades, win_rate, max_drawdown, created_at
             FROM runs
             WHERE dataset = 'valid' AND total_trades >= 15
+              AND (win_rate IS NULL OR win_rate < 95.0)
             ORDER BY sharpe_ratio DESC
             LIMIT 1
         """)
@@ -218,6 +219,7 @@ def get_context(
         cur = conn.cursor()
 
         # Top N resultados OOS de todos los tiempos
+        # Excluir runs con WR=100% (artefacto de breakeven_after_r=0)
         cur.execute(f"""
             SELECT r.strategy, r.params_json, r.sharpe_ratio AS sharpe_oos,
                    r.total_trades AS trades_oos, r.win_rate AS wr_oos,
@@ -229,6 +231,7 @@ def get_context(
                 AND t.dataset = 'train'
             )
             WHERE r.dataset = 'valid' AND r.total_trades >= 15
+              AND (r.win_rate IS NULL OR r.win_rate < 95.0)
             ORDER BY r.sharpe_ratio DESC
             LIMIT {top_n}
         """)
@@ -887,13 +890,18 @@ async def hypothesize():
         champion_section +
         external_section +
         "\n\nGenerá 5-8 experimentos para backtesting BTC/USDT. "
-        "Estrategias: breakout, vwap_pullback.\n"
+        "Estrategias disponibles: breakout, vwap_pullback, mean_reversion.\n"
+        "IMPORTANTE: Usá SOLO los params listados abajo. No inventés params que no estén en la lista.\n"
         "breakout params: lookback(10-40), vol_ratio_min(0.8-3.0), atr_period(10-20), "
         "sl_atr_mult(0.75-4.0), trail_atr_mult(1.5-4.0), ema_trend_period(10-50), "
         "ema_trend_daily_period(15-60), adx_filter(0-35), breakeven_after_r(0=disabled, 0.5-1.5).\n"
         "vwap_pullback params: sl_atr_mult(0.75-4.0), trail_atr_mult(1.5-4.0), "
         "adx_filter(0-35), vol_ratio_min(0.8-3.0), breakeven_after_r(0=disabled, 0.5-1.5), "
         "ema_trend_period(10-50), ema_trend_daily_period(15-60).\n"
+        "mean_reversion params: rsi_period(7-21), rsi_oversold(25-40), bb_period(14-30), "
+        "bb_std(1.5-3.0), atr_period(7-21), sl_atr_mult(1.5-3.0), "
+        "ema_trend_period(20-200), breakeven_after_r(0=disabled, 0.5-1.0), max_hold_bars(10-40).\n"
+        "Incluí al menos 1-2 experimentos de mean_reversion para explorar nueva estrategia.\n"
         "Respondé SOLO con JSON: {experiments: [{strategy, params, notes}]}"
     )
     try:
@@ -908,6 +916,7 @@ async def hypothesize():
     REQUIRED = {
         "breakout": ["lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r"],
         "vwap_pullback": ["sl_atr_mult","trail_atr_mult","adx_filter","vol_ratio_min","breakeven_after_r","ema_trend_period","ema_trend_daily_period"],
+        "mean_reversion": ["rsi_period","rsi_oversold","bb_period","bb_std","atr_period","sl_atr_mult","ema_trend_period"],
     }
     VALID_RANGES = {
         "breakout": {
@@ -921,6 +930,13 @@ async def hypothesize():
             "adx_filter": (0, 35), "vol_ratio_min": (0.8, 3.0),
             "breakeven_after_r": (0, 1.5), "ema_trend_period": (10, 50),
             "ema_trend_daily_period": (15, 60),
+        },
+        "mean_reversion": {
+            "rsi_period": (7, 21), "rsi_oversold": (25, 40),
+            "bb_period": (14, 30), "bb_std": (1.5, 3.0),
+            "atr_period": (7, 21), "sl_atr_mult": (1.5, 3.0),
+            "ema_trend_period": (20, 200), "breakeven_after_r": (0, 1.0),
+            "max_hold_bars": (10, 40),
         },
     }
 
@@ -937,6 +953,19 @@ async def hypothesize():
         if not all(k in params for k in REQUIRED[strategy]):
             continue
 
+        # Strip de params desconocidos — el motor los ignora silenciosamente,
+        # lo que genera falsos learnings sobre params que no existen en el motor.
+        # Solo conservar params definidos en VALID_RANGES para esta estrategia.
+        known_keys = set(VALID_RANGES.get(strategy, {}).keys())
+        ghost_keys = [k for k in params if k not in known_keys]
+        if ghost_keys:
+            print(f"[hypothesize] strip ghost params {ghost_keys} de {strategy}")
+        params = {k: v for k, v in params.items() if k in known_keys}
+
+        # Re-verificar que los required sigan presentes después del strip
+        if not all(k in params for k in REQUIRED[strategy]):
+            continue
+
         # P2: Validar rangos
         out_of_range = False
         for key, (lo, hi) in VALID_RANGES.get(strategy, {}).items():
@@ -949,7 +978,7 @@ async def hypothesize():
             skipped_range += 1
             continue
 
-        # P1: Deduplicar — no encolar params ya testeados
+        # P1: Deduplicar — no encolar params ya testeados (sobre params limpios)
         params_normalized = json.dumps(params, sort_keys=True)
         existing = cur.execute(
             "SELECT id FROM experiments WHERE strategy=? AND params_json=?",

@@ -1,0 +1,190 @@
+{
+  "_description": "Tópicos de rotación para Brave Search. El sistema elige el que lleva más tiempo sin buscarse.",
+  "_rotation_logic": "Ordenar por last_searched ASC NULLS FIRST. Con 12 tópicos y 1 búsqueda/día, cada tópico se repite cada 12 días.",
+  "_brave_queries_per_topic": 5,
+  "_total_queries_per_day": 10,
+  "_monthly_budget": "120 queries / 2000 disponibles = 6% del free tier",
+
+  "topics": [
+    {
+      "id": "btc_breakout_strategy",
+      "label": "Breakout Strategy BTC",
+      "search_queries": [
+        "BTC breakout trading strategy backtesting results 2024 2025",
+        "bitcoin price breakout indicators technical analysis",
+        "crypto breakout confirmation volume ADX filter",
+        "BTC 4H timeframe breakout system performance",
+        "bitcoin momentum breakout false signal filter"
+      ],
+      "hypothesis_focus": "Nuevos filtros de confirmación para breakouts. Combinaciones con otros indicadores de volumen o momentum.",
+      "related_strategies": ["breakout"],
+      "last_searched": null,
+      "search_count": 0
+    },
+    {
+      "id": "vwap_pullback_crypto",
+      "label": "VWAP Pullback Crypto",
+      "search_queries": [
+        "VWAP pullback strategy cryptocurrency backtesting",
+        "VWAP reset daily trading system bitcoin",
+        "volume weighted average price trading signal BTC",
+        "VWAP deviation bands crypto trading edge",
+        "anchored VWAP pullback entry crypto 2025"
+      ],
+      "hypothesis_focus": "Variantes del VWAP: anchored VWAP, VWAP deviation bands, multiple VWAP timeframes.",
+      "related_strategies": ["vwap_pullback"],
+      "last_searched": null,
+      "search_count": 0
+    },
+    {
+      "id": "adx_regime_filter",
+      "label": "ADX Regime Detection",
+      "search_queries": [
+        "ADX trend strength filter trading strategy backtesting",
+        "ADX threshold optimization cryptocurrency",
+        "average directional index regime filter crypto trading",
+        "ADX DMI trading system bitcoin performance",
+        "ADX slope momentum filter entry signal"
+      ],
+      "hypothesis_focus": "Variantes del ADX: slope del ADX, combinaciones ADX + DI+/DI-, ADX multi-timeframe.",
+      "related_strategies": ["breakout", "vwap_pullback"],
+      "last_searched": null,
+      "search_count": 0
+    },
+    {
+      "id": "mean_reversion_bitcoin",
+      "label": "Mean Reversion BTC",
+      "search_queries": [
+        "mean reversion trading strategy bitcoin backtesting 2024",
+        "RSI oversold bounce crypto trading system",
+        "Bollinger Bands mean reversion BTC performance",
+        "crypto mean reversion statistical edge",
+        "bitcoin RSI extreme levels trading signal"
+      ],
+      "hypothesis_focus": "Mejores configuraciones de RSI + BB para mean reversion. Filtros adicionales para aumentar WR y número de trades.",
+      "related_strategies": ["mean_reversion"],
+      "last_searched": null,
+      "search_count": 0
+    },
+    {
+      "id": "bitcoin_momentum_backtest",
+      "label": "Bitcoin Momentum",
+      "search_queries": [
+        "bitcoin momentum trading strategy backtest results",
+        "crypto momentum indicators comparison 2025",
+        "BTC rate of change momentum signal",
+        "bitcoin trend following system Sharpe ratio",
+        "crypto momentum factor investing performance"
+      ],
+      "hypothesis_focus": "Indicadores de momentum no explorados: ROC, MACD con parámetros alternativos, TSI.",
+      "related_strategies": ["breakout", "vwap_pullback"],
+      "last_searched": null,
+      "search_count": 0
+    },
+    {
+      "id": "crypto_market_microstructure",
+      "label": "Market Microstructure",
+      "search_queries": [
+        "crypto market microstructure trading signals bitcoin",
+        "order flow imbalance bitcoin trading edge",
+        "bid ask spread signal cryptocurrency trading",
+        "BTC liquidity zones trading strategy",
+        "crypto order book depth signal backtesting"
+      ],
+      "hypothesis_focus": "Señales basadas en estructura del mercado: liquidez, zonas de soporte/resistencia, order flow.",
+      "related_strategies": ["breakout", "vwap_pullback"],
+      "last_searched": null,
+      "search_count": 0
+    },
+    {
+      "id": "btc_funding_rate_signal",
+      "label": "Funding Rate Signal",
+      "search_queries": [
+        "bitcoin funding rate trading strategy backtesting",
+        "crypto perpetual futures funding rate signal",
+        "negative funding rate long signal bitcoin",
+        "funding rate mean reversion strategy crypto",
+        "BTC basis trade funding rate extremes"
+      ],
+      "hypothesis_focus": "Funding rate como señal de contrarian. Combinaciones con precio y tendencia para superar la anti-correlación detectada.",
+      "related_strategies": ["mean_reversion"],
+      "last_searched": null,
+      "search_count": 0
+    },
+    {
+      "id": "bitcoin_onchain_indicators",
+      "label": "On-Chain Indicators",
+      "search_queries": [
+        "bitcoin on-chain indicators trading signal backtesting",
+        "MVRV ratio bitcoin trading strategy",
+        "realized price bitcoin trading signal 2024 2025",
+        "bitcoin NVT ratio trading performance",
+        "on-chain momentum signal crypto trading"
+      ],
+      "hypothesis_focus": "Indicadores on-chain como filtros macro: MVRV, SOPR, realized price relativo al precio spot.",
+      "related_strategies": ["breakout", "vwap_pullback"],
+      "last_searched": null,
+      "search_count": 0
+    },
+    {
+      "id": "crypto_options_sentiment",
+      "label": "Options Sentiment",
+      "search_queries": [
+        "bitcoin options market sentiment trading signal",
+        "crypto put call ratio trading strategy",
+        "BTC implied volatility skew signal",
+        "options gamma exposure bitcoin price signal",
+        "crypto options open interest trading edge"
+      ],
+      "hypothesis_focus": "Sentiment del mercado de opciones como señal de contrarian o momentum para BTC.",
+      "related_strategies": ["breakout"],
+      "last_searched": null,
+      "search_count": 0
+    },
+    {
+      "id": "btc_volume_profile_strategy",
+      "label": "Volume Profile",
+      "search_queries": [
+        "volume profile trading strategy bitcoin backtesting",
+        "point of control VPOC bitcoin trading signal",
+        "value area high low bitcoin strategy",
+        "volume at price BTC trading system",
+        "BTC high volume node trading edge"
+      ],
+      "hypothesis_focus": "Volume Profile: POC, VAH, VAL como niveles de soporte/resistencia dinámica para entradas.",
+      "related_strategies": ["vwap_pullback", "breakout"],
+      "last_searched": null,
+      "search_count": 0
+    },
+    {
+      "id": "bitcoin_halving_cycle",
+      "label": "Halving Cycle",
+      "search_queries": [
+        "bitcoin halving cycle trading strategy backtesting",
+        "BTC 4 year cycle pattern performance 2024 2025",
+        "bitcoin seasonality monthly returns analysis",
+        "crypto bull market phase detection indicator",
+        "bitcoin cycle top bottom prediction strategy"
+      ],
+      "hypothesis_focus": "Ajustes de parámetros según ciclo del halving: ¿los filtros óptimos cambian en bull vs bear?",
+      "related_strategies": ["breakout", "vwap_pullback"],
+      "last_searched": null,
+      "search_count": 0
+    },
+    {
+      "id": "crypto_trend_following",
+      "label": "Trend Following Systems",
+      "search_queries": [
+        "systematic trend following cryptocurrency performance 2024 2025",
+        "CTA strategy bitcoin futures backtesting",
+        "trend following Sharpe ratio crypto vs equities",
+        "bitcoin dual moving average crossover optimization",
+        "crypto breakout trend following system parameters"
+      ],
+      "hypothesis_focus": "Literatura de trend following sistemático aplicada a BTC: Turtle system, Donchian channels, Triple screen.",
+      "related_strategies": ["breakout"],
+      "last_searched": null,
+      "search_count": 0
+    }
+  ]
+}

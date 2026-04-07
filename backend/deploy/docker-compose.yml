@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  autolab-api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: autolab-api
+    restart: unless-stopped
+
+    environment:
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY}
+      - SUPABASE_DB_URL=${SUPABASE_DB_URL}
+      - SQLITE_DB_PATH=/app/data/coco_lab.db
+      - SCRIPTS_PATH=/app/backtesting
+
+    volumes:
+      - autolab_data:/app/data
+
+    expose:
+      - "8000"
+
+    networks:
+      - supabase-net
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  autolab_data:
+    driver: local
+    name: autolab_data
+
+networks:
+  supabase-net:
+    external: true
+    name: pgo4kkk4sg80cg0wwkkg0css

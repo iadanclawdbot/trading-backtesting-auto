@@ -1,0 +1,168 @@
+{
+  "name": "AutoLab — Daily Research (9am)",
+  "nodes": [
+    {
+      "id": "b2c3d4e5-0002-0002-0002-000000000001",
+      "name": "Cron 9am Daily",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [100, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 12 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "b2c3d4e5-0002-0002-0002-000000000002",
+      "name": "Brave Search — BTC Strategies",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [320, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.search.brave.com/res/v1/web/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {"name": "Accept", "value": "application/json"},
+            {"name": "X-Subscription-Token", "value": "={{ $env.BRAVE_SEARCH_API_KEY }}"}
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {"name": "q", "value": "BTC trading strategy backtesting 2025 Sharpe ratio quantitative"},
+            {"name": "count", "value": "5"},
+            {"name": "freshness", "value": "pw"}
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b2c3d4e5-0002-0002-0002-000000000003",
+      "name": "Formatear Resultados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [540, 300],
+      "parameters": {
+        "jsCode": "const results = $input.item.json.web?.results || [];\nconst formatted = results.slice(0, 5).map(r => ({\n  title: r.title,\n  url: r.url,\n  description: r.description\n}));\nreturn [{json: {search_results: formatted, count: formatted.length, query_date: new Date().toISOString()}}];"
+      }
+    },
+    {
+      "id": "b2c3d4e5-0002-0002-0002-000000000004",
+      "name": "NVIDIA — Resumir Research",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [760, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://integrate.api.nvidia.com/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"z-ai/glm5\",\n  \"max_tokens\": 1024,\n  \"temperature\": 0.6,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Analizás resultados de búsquedas web sobre trading BTC cuantitativo. Extraés ideas concretas para backtesting BTC/USDT 4H. Respondé SIEMPRE en JSON array válido sin texto adicional.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Resultados de búsqueda (\" + new Date().toISOString().slice(0,10) + \"):\\n\" + JSON.stringify({{ $json.search_results }}) + \"\\n\\nExtrae 2-3 ideas de estrategias o indicadores aplicables a BTC/USDT 4H.\\nFormato OBLIGATORIO: [{\\\"topic\\\":\\\"nombre_indicador\\\",\\\"source_url\\\":\\\"...\\\",\\\"key_finding\\\":\\\"...\\\",\\\"hypothesis\\\":\\\"hipótesis de backtesting específica\\\"}]\"\n    }\n  ]\n}",
+        "options": {}
+      }
+    },
+    {
+      "id": "b2c3d4e5-0002-0002-0002-000000000005",
+      "name": "Parsear Ideas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [980, 300],
+      "parameters": {
+        "jsCode": "const raw = $input.item.json.choices[0].message.content;\nlet ideas;\ntry {\n  const match = raw.match(/```json([\\s\\S]*?)```/) || raw.match(/(\\[[\\s\\S]*\\])/);\n  ideas = JSON.parse(match ? match[1].trim() : raw.trim());\n  if (!Array.isArray(ideas)) ideas = [];\n} catch(e) {\n  console.log('Parse error:', e.message, '| Raw:', raw.substring(0, 200));\n  ideas = [];\n}\nif (ideas.length === 0) {\n  return [{json: {ideas: [], skipped: true, reason: 'no parseable ideas'}}];\n}\nreturn [{json: {ideas, count: ideas.length}}];"
+      }
+    },
+    {
+      "id": "b2c3d4e5-0002-0002-0002-000000000006",
+      "name": "¿Hay ideas?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1200, 300],
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true},
+          "conditions": [
+            {
+              "id": "check-ideas",
+              "leftValue": "={{ $json.count }}",
+              "rightValue": 0,
+              "operator": {"type": "number", "operation": "gt"}
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "b2c3d4e5-0002-0002-0002-000000000007",
+      "name": "Guardar en PostgreSQL",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [1420, 200],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO external_research (topic, source_url, key_finding, hypothesis, created_at)\nSELECT \n  d->>'topic',\n  d->>'source_url',\n  d->>'key_finding',\n  d->>'hypothesis',\n  NOW()\nFROM json_array_elements('{{ $json.ideas }}'::json) AS d\nON CONFLICT (topic, hypothesis) DO NOTHING",
+        "options": {}
+      },
+      "credentials": {
+        "postgres": {
+          "id": "postgres-supabase",
+          "name": "Supabase PostgreSQL"
+        }
+      }
+    },
+    {
+      "id": "b2c3d4e5-0002-0002-0002-000000000008",
+      "name": "No hay ideas — Skip",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1420, 400],
+      "parameters": {}
+    }
+  ],
+
+  "connections": {
+    "Cron 9am Daily": {
+      "main": [[{"node": "Brave Search — BTC Strategies", "type": "main", "index": 0}]]
+    },
+    "Brave Search — BTC Strategies": {
+      "main": [[{"node": "Formatear Resultados", "type": "main", "index": 0}]]
+    },
+    "Formatear Resultados": {
+      "main": [[{"node": "NVIDIA — Resumir Research", "type": "main", "index": 0}]]
+    },
+    "NVIDIA — Resumir Research": {
+      "main": [[{"node": "Parsear Ideas", "type": "main", "index": 0}]]
+    },
+    "Parsear Ideas": {
+      "main": [[{"node": "¿Hay ideas?", "type": "main", "index": 0}]]
+    },
+    "¿Hay ideas?": {
+      "main": [
+        [{"node": "Guardar en PostgreSQL", "type": "main", "index": 0}],
+        [{"node": "No hay ideas — Skip", "type": "main", "index": 0}]
+      ]
+    }
+  },
+
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

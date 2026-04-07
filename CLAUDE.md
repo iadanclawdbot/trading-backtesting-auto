@@ -1,139 +1,182 @@
-# trading-backtesting-auto
-> Ecosistema autónomo del proyecto Coco Stonks Lab.
-> Repo hermano de `trading-backtesting` (el laboratorio manual).
-> Leer `TASK.md` al inicio de cada sesión — es el documento vivo de planificación.
+# Agent Instructions — trading-backtesting-auto
+
+You're working inside the **WAT framework** (Workflows, Agents, Tools). This architecture separates concerns so that probabilistic AI handles reasoning while deterministic code handles execution. That separation is what makes this system reliable.
 
 ---
 
-## 🎯 QUÉ ES ESTE PROYECTO
+## The WAT Architecture
 
-Sistema de mejora continua autónoma de estrategias de trading BTC/USDT. Mientras el repo manual (`trading-backtesting`) se usa para experimentar a mano, este repo corre 24/7 en producción sin intervención humana.
+**Layer 1: Workflows (The Instructions)**
 
-**El ciclo autónomo cada 30 minutos:**
+- Markdown SOPs stored in `workflows/`
+- Each workflow defines the objective, required inputs, which tools to use, expected outputs, and how to handle edge cases
+- Written in plain language, the same way you'd brief someone on your team
+
+**Layer 2: Agents (The Decision-Maker)**
+
+- This is your role. You're responsible for intelligent coordination
+- Read the relevant workflow, run tools in the correct sequence, handle failures gracefully, and ask clarifying questions when needed
+- You connect intent to execution without trying to do everything yourself
+- Example: If you need to queue new experiments, read `workflows/run_experiment_cycle.md`, figure out the required inputs, then execute `backend/backtesting/pipeline_runner.py`
+
+**Layer 3: Tools (The Execution)**
+
+- Python scripts in `backend/src/` (AutoLab API) and `backend/backtesting/` (motores)
+- API calls, backtests, database queries, Telegram notifications
+- Credentials and API keys are stored in `.env` (never anywhere else)
+- These scripts are consistent, testable, and fast
+
+**Why this matters:** When AI tries to handle every step directly, accuracy drops fast. If each step is 90% accurate, you're down to 59% success after just five steps. By offloading execution to deterministic scripts, you stay focused on orchestration and decision-making where you excel.
+
+---
+
+## What This Project Does
+
+AutoLab es un sistema de mejora continua autónoma de estrategias de trading BTC/USDT. Corre 24/7 en producción sin intervención humana. Cada 30 minutos ejecuta un ciclo:
+
 ```
-analizar resultados → hipotetizar experimentos → correr backtests → aprender → notificar Telegram
+POST /analyze → POST /hypothesize → POST /run-pipeline → POST /learn → Telegram
 ```
 
 **Stack:**
-- Backend: FastAPI (Python) + SQLite (backtesting) + PostgreSQL/Supabase (inteligencia)
-- Orquestación: n8n (workflows) + Coolify (deploy en Oracle Cloud)
-- LLMs: NVIDIA Build API gratuito (kimi-k2-instruct, 45 RPM)
-- Notificaciones: Telegram (@dante_ia_bot)
+- `backend/src/autolab_api.py` — FastAPI: cerebro del sistema, todos los endpoints
+- `backend/backtesting/` — Motores de backtesting (breakout, VWAP, MR, etc.)
+- PostgreSQL/Supabase — Capa de inteligencia (learnings, insights, research)
+- SQLite (`coco_lab.db`) — Motor de backtesting (runs, trades, experiments, candles)
+- n8n — Orquestación de workflows en producción
+- Coolify — Deploy en Oracle Cloud ARM
+
+**Repo:** `iadanclawdbot/trading-backtesting-auto`
+**API en producción:** `https://autolab-api.dantelujan.online`
 
 ---
 
-## 📂 ARQUITECTURA DEL REPO
+## File Structure
 
 ```
 trading-backtesting-auto/
 │
-├── backend/                    ← API autónoma (FastAPI)
-│   ├── src/                    ← Código Python principal
-│   │   ├── autolab_api.py      ← Core: todos los endpoints del sistema
+├── workflows/                  ← SOPs — leer antes de ejecutar cualquier tarea
+│   ├── deploy.md               ← cómo hacer deploy en Coolify
+│   ├── experiment_cycle.md     ← cómo correr un ciclo de experimentos
+│   ├── diagnose_stall.md       ← qué hacer cuando el sistema se estanca
+│   └── add_strategy.md        ← cómo agregar una nueva estrategia
+│
+├── backend/
+│   ├── src/                    ← AutoLab API (los 4 archivos Python)
+│   │   ├── autolab_api.py      ← Core: todos los endpoints
 │   │   ├── autolab_fitness.py  ← Fitness function + parameter space (INMUTABLE)
 │   │   ├── autolab_brain.py    ← LLM orchestrator (legacy)
 │   │   └── autolab_loop.py     ← CLI loop (legacy)
 │   │
-│   ├── backtesting/            ← Motores de backtesting (copia de trading-backtesting/scripts/)
+│   ├── backtesting/            ← Motores de backtesting (tools de ejecución)
 │   │   ├── config.py           ← Parámetros, reglas, costos
 │   │   ├── motor_base.py       ← Todos los motores: breakout, vwap, MR, etc.
-│   │   ├── pipeline_runner.py  ← Consume cola de experiments → guarda runs + trades
+│   │   ├── pipeline_runner.py  ← Consume cola experiments → guarda runs + trades
 │   │   └── fase1_motor.py      ← cargar_velas() + guardar_en_db()
 │   │
 │   ├── deploy/
-│   │   ├── Dockerfile          ← uvicorn src.autolab_api:app
-│   │   ├── docker-compose.yml
-│   │   └── .env.example
+│   │   ├── Dockerfile          ← CMD: uvicorn src.autolab_api:app
+│   │   ├── docker-compose.yml  ← Base Directory: backend/
+│   │   └── .env.example        ← Template de variables de entorno
 │   │
 │   ├── database/               ← Schema PostgreSQL + topic_rotation.json
 │   ├── n8n/                    ← Workflows exportados (main loop, daily research, chat)
-│   ├── docs/                   ← arquitectura.md, changelog.md, setup
-│   ├── skills/                 ← skill_opus_analyst.md
-│   ├── data/                   ← gitignored — coco_lab.db (~863MB)
-│   ├── CLAUDE.md               ← Instrucciones específicas del backend
-│   ├── TASK.md                 ← Checklist del backend
-│   └── requirements.txt        ← backtesting + API unificado
+│   ├── docs/                   ← arquitectura.md, changelog.md — leer antes de tocar infra
+│   └── skills/                 ← skill_opus_analyst.md — análisis estratégico profundo
 │
-└── frontend/                   ← Dashboard (por construir)
-    └── ...
+├── frontend/                   ← Dashboard (por construir)
+│
+├── .tmp/                       ← Archivos temporales. Regenerables, nunca commitear
+├── .env                        ← API keys y credenciales (NUNCA en otro lugar)
+├── CLAUDE.md                   ← Este archivo
+└── TASK.md                     ← Checklist vivo — leer al inicio de cada sesión
 ```
 
----
-
-## 🔄 FLUJO DE TRABAJO POR ROL
-
-| Si vas a... | Carpeta | Skill a leer |
-|-------------|---------|-------------|
-| Modificar la API o el ciclo autónomo | `backend/` | `backend/CLAUDE.md` |
-| Resolver por qué el sistema se estancó | `backend/` | `backend/skills/skill_opus_analyst.md` |
-| Construir el dashboard | `frontend/` | `frontend/CLAUDE.md` (cuando exista) |
-| Deploy o infra | `backend/deploy/` | `backend/docs/arquitectura.md` |
+**Core principle:** `TASK.md` es el documento vivo de planificación. Revisarlo y actualizarlo en cada sesión. Nunca empezar sin leerlo.
 
 ---
 
-## 📋 PASO 0 — INICIO DE SESIÓN (SIEMPRE)
+## How to Operate
 
-**Antes de tocar cualquier archivo:**
+**1. Leer TASK.md primero — siempre**
 
-1. Leer `TASK.md` → identificar el ítem más urgente
-2. Decidir en qué subcarpeta se trabaja hoy (`backend/` o `frontend/`)
-3. Leer el `CLAUDE.md` de esa subcarpeta
-4. Si el trabajo es en el backend → verificar que la API esté up:
-   ```bash
-   curl https://autolab-api.dantelujan.online/health
-   ```
+Antes de cualquier acción, leer `TASK.md` e identificar el ítem más urgente. Confirmar en voz alta:
+- "El ítem más urgente es: [ítem]"
+- "La API está: UP / DOWN" → `curl https://autolab-api.dantelujan.online/health`
+- "Hoy trabajo en: backend / frontend / infra"
 
-**Confirmá en voz alta antes de empezar:**
-- "Hoy trabajo en: [backend / frontend]"
-- "El ítem más urgente de TASK.md es: [ítem]"
-- "La API está: [UP / DOWN]"
+**2. Buscar el workflow correspondiente antes de ejecutar**
+
+Antes de hacer cualquier tarea, revisar si existe un workflow en `workflows/` que la describa. Si existe, seguirlo. Si no existe y la tarea es recurrente, crearlo después de ejecutarla.
+
+**3. Buscar tools existentes antes de crear nuevos**
+
+Antes de escribir código, verificar si ya existe en `backend/src/` o `backend/backtesting/`. Solo crear scripts nuevos cuando no existe nada para esa tarea.
+
+**4. Aprender y adaptar cuando algo falla**
+
+Cuando ocurre un error:
+- Leer el mensaje completo y el traceback
+- Revisar `backend/docs/changelog.md` — puede que ya fue resuelto antes
+- Corregir el script y verificar que funciona
+- Actualizar el workflow con lo aprendido (rate limits, comportamientos inesperados, constraints)
+
+**5. Mantener TASK.md actualizado**
+
+Al completar un ítem: marcarlo `[x]`. Al descubrir algo nuevo: agregarlo. Al terminar la sesión: actualizar el estado del sistema en la tabla superior de TASK.md.
 
 ---
 
-## 🚀 DEPLOY
+## The Self-Improvement Loop
+
+Cada falla es una oportunidad para hacer el sistema más robusto:
+
+1. Identificar qué falló
+2. Corregir el tool o el workflow
+3. Verificar que funciona
+4. Actualizar el workflow con el nuevo approach
+5. Continuar con un sistema más confiable
+
+Este loop es cómo el framework mejora con el tiempo. Los errores ya documentados están en la sección "NO REPETIR" de `TASK.md`.
+
+---
+
+## Contexto de la Migración (2026-04-07)
+
+Este repo fue separado del monorepo `trading-backtesting` donde vivía en `actualizacion/autoevolucion/`.
+
+**Cómo era antes:**
+- Archivos Python en `actualizacion/autoevolucion/scripts/`
+- Dockerfile con `context: ../../..` (dependía de la raíz del repo padre)
+- Coolify deployaba desde `trading-backtesting`
+
+**Cómo es ahora:**
+- Archivos Python en `backend/src/`
+- Motores en `backend/backtesting/` (antes `scripts/` del repo manual)
+- Dockerfile limpio, `context: ..` desde `backend/`
+- `SCRIPTS_PATH` en container = `/app/backtesting`
+- CMD = `uvicorn src.autolab_api:app`
+
+**Repo hermano:** `trading-backtesting` — laboratorio manual, backtesting conversacional, fuente original de los motores en `backend/backtesting/`.
+
+---
+
+## Deploy
 
 Un solo repo, dos servicios independientes en Coolify:
 
-| Servicio | Base Directory | Dockerfile |
-|----------|---------------|------------|
-| `autolab-api` | `backend/` | `deploy/Dockerfile` |
-| `frontend` | `frontend/` | `deploy/Dockerfile` (cuando exista) |
+| Servicio | Base Directory | Dockerfile | Env clave |
+|----------|---------------|------------|-----------|
+| `autolab-api` | `backend/` | `deploy/Dockerfile` | `SCRIPTS_PATH=/app/backtesting` |
+| `frontend` | `frontend/` | `deploy/Dockerfile` | — |
 
-**Deploy:** `git push origin main` → Coolify detecta cambios y redeploya el servicio correspondiente.
-
----
-
-## 🔗 RELACIÓN CON trading-backtesting (el manual)
-
-`backend/backtesting/` es una **copia** de `trading-backtesting/scripts/`. Si se mejora un motor en el manual y es relevante para AutoLab, sincronizar a mano.
-
-No hay dependencia en runtime — son repos totalmente independientes.
+`git push origin main` → Coolify detecta cambios y redeploya el servicio correspondiente.
 
 ---
 
-## 📖 INFRA DEPLOYADA
+## Bottom Line
 
-| Servicio | URL |
-|----------|-----|
-| autolab-api | https://autolab-api.dantelujan.online |
-| n8n | https://n8n.dantelujan.online |
-| Supabase | https://supabase.dantelujan.online |
-| Telegram | @dante_ia_bot |
+Leés `TASK.md`, identificás el próximo ítem, buscás el workflow, ejecutás los tools, manejás errores, actualizás la documentación. Tu trabajo es orquestar — no hacer todo a mano.
 
-**Repo GitHub:** `iadanclawdbot/trading-backtesting-auto`
-
----
-
-## 📝 TASK.md — EL DOCUMENTO VIVO
-
-`TASK.md` es el centro de planificación de este proyecto. Se actualiza en cada sesión:
-- Al iniciar: revisar qué está pendiente
-- Al completar un ítem: marcarlo como `[x]`
-- Al descubrir algo nuevo: agregarlo en la sección correspondiente
-- Al terminar la sesión: actualizar el estado del sistema
-
-**Nunca empezar a trabajar sin haber leído TASK.md primero.**
-
----
-
-*Creado el 2026-04-07 | AutoLab v4.2 | Benchmark: Sharpe OOS 1.166 (V5 Portfolio)*
+Stay pragmatic. Stay reliable. Keep learning.

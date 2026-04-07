@@ -39,7 +39,7 @@ AutoLab es un sistema de mejora continua autónoma de estrategias de trading. Co
 | URL pública | `https://autolab-api.dantelujan.online` |
 | Puerto interno | `8000` |
 | Framework | FastAPI + uvicorn |
-| Imagen | Build desde repo (Dockerfile.coolify) |
+| Imagen | Build desde repo (`deploy/Dockerfile`) |
 | Gestionado por | Coolify |
 | Container name | `<COOLIFY_UUID>-XXXXXXXXXX` (varía en cada deploy) |
 
@@ -72,7 +72,7 @@ n8n HTTP Request node (v2.13.2) inyecta un null byte (`\x00`) al inicio del body
 NVIDIA_API_KEY=nvapi-...
 SUPABASE_DB_URL=postgresql://postgres:PASSWORD@supabase-db-<SUPABASE_NETWORK_ID>:5432/postgres
 SQLITE_DB_PATH=/app/data/coco_lab.db
-SCRIPTS_PATH=/app/scripts
+SCRIPTS_PATH=/app/backtesting
 LLM_MODEL=moonshotai/kimi-k2-instruct          # Modelo rápido para /hypothesize y /learn
 LLM_MODEL_ANALYSIS=moonshotai/kimi-k2-instruct  # Modelo para /analyze (overridable a nemotron-120B)
 ```
@@ -302,56 +302,47 @@ Telegram message → POST /chat
 
 ## Estructura de Archivos del Repo
 
+**Repo:** `iadanclawdbot/trading-backtesting-auto`
+
 ```
-trading-backtesting/
-├── scripts/                        # Motor de backtesting (Python)
-│   ├── config.py                   # Single Source of Truth — parámetros
-│   ├── motor_base.py               # Motores de backtesting (breakout, vwap, etc.)
-│   ├── fase1_motor.py              # Entry point + guardar_en_db()
-│   ├── pipeline_runner.py          # Runner autónomo de la cola
-│   └── ...
+trading-backtesting-auto/
 │
-├── data/                           # SQLite (gitignored)
-│   └── coco_lab.db                 # DB principal (~863MB)
+├── workflows/                  # SOPs — leer antes de ejecutar cualquier tarea
+│   ├── deploy.md               # Cómo hacer deploy en Coolify
+│   ├── experiment_cycle.md     # Cómo correr un ciclo de experimentos
+│   ├── diagnose_stall.md       # Qué hacer cuando el sistema se estanca
+│   └── add_strategy.md         # Cómo agregar una nueva estrategia
 │
-├── actualizacion/
-│   ├── docs/                       # Documentación técnica
-│   │   ├── arquitectura.md         # Este archivo
-│   │   └── changelog.md            # Historial de cambios y aprendizajes
+├── backend/
+│   ├── src/                    # AutoLab API (FastAPI)
+│   │   ├── autolab_api.py      # Core: todos los endpoints
+│   │   ├── autolab_fitness.py  # Fitness function + PARAMETER_SPACE (INMUTABLE)
+│   │   ├── autolab_brain.py    # LLM orchestrator (legacy)
+│   │   └── autolab_loop.py     # CLI loop (legacy)
 │   │
-│   └── autoevolucion/
-│       ├── deploy/
-│       │   ├── Dockerfile.coolify  # Imagen para Coolify
-│       │   ├── docker-compose.yml  # Compose completo
-│       │   └── requirements.txt    # Deps Python
-│       │
-│       ├── scripts/
-│       │   ├── autolab_api.py      # FastAPI — endpoints REST + LLM proxies
-│       │   ├── autolab_brain.py    # Lógica LLM multi-provider (legacy)
-│       │   ├── autolab_fitness.py  # Fitness function + PARAMETER_SPACE
-│       │   └── autolab_loop.py     # Loop principal (legacy, reemplazado por n8n)
-│       │
-│       ├── database/
-│       │   ├── schema_postgresql.sql   # Schema de Supabase
-│       │   ├── migrate_sqlite_to_pg.py # Migración SQLite → PG
-│       │   └── topic_rotation.json     # Config de temas de búsqueda
-│       │
-│       ├── n8n/
-│       │   ├── workflow_main_loop.json      # Export del Main Loop
-│       │   ├── workflow_daily_research.json # Export del Daily Research
-│       │   └── workflow_autolab.json        # Export combinado
-│       │
-│       ├── docs/
-│       │   └── setup_coolify_supabase.md   # Guía de setup
-│       │
-│       └── skills/
-│           └── skill_opus_analyst.md   # Instrucciones para análisis Opus
+│   ├── backtesting/            # Motores de backtesting (tools de ejecución)
+│   │   ├── config.py           # Parámetros, reglas, costos
+│   │   ├── motor_base.py       # Todos los motores: breakout, vwap, MR, etc.
+│   │   ├── pipeline_runner.py  # Consume cola experiments → guarda runs + trades
+│   │   └── fase1_motor.py      # cargar_velas() + guardar_en_db()
+│   │
+│   ├── deploy/
+│   │   ├── Dockerfile          # CMD: uvicorn src.autolab_api:app
+│   │   ├── docker-compose.yml  # Base Directory: backend/
+│   │   └── .env.example        # Template de variables de entorno
+│   │
+│   ├── database/               # Schema PostgreSQL + topic_rotation.json
+│   ├── n8n/                    # Workflows exportados (main loop, daily research, chat)
+│   ├── docs/                   # arquitectura.md, changelog.md
+│   ├── skills/                 # skill_opus_analyst.md
+│   └── requirements.txt        # Dependencias Python
 │
-├── resultados/
-│   ├── historico_aprendizajes.md   # Fuente de verdad — resultados
-│   └── batch_report_latest.md      # Reporte del último batch
+├── frontend/                   # Dashboard (por construir)
 │
-└── dashboard-lab/                  # Frontend Next.js (visualización)
+├── .tmp/                       # Archivos temporales. Regenerables, nunca commitear
+├── .env                        # API keys y credenciales (NUNCA en otro lugar)
+├── CLAUDE.md                   # Instrucciones del agente + arquitectura WAT
+└── TASK.md                     # Checklist vivo — leer al inicio de cada sesión
 ```
 
 ---
@@ -550,4 +541,4 @@ ALTER TABLE external_research ADD CONSTRAINT external_research_outcome_check
 
 ---
 
-*Documentación v4.1 — Actualizada 2026-03-25 — AutoLab: chat interactivo, topic rotation, batch tracking, telegram enriquecido, tables pobladas*
+*Documentación v4.2 — Actualizada 2026-04-07 — Migración a repo independiente `trading-backtesting-auto`, estructura limpia `backend/src/` + `backend/backtesting/`*

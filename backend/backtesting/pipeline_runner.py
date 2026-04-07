@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # =============================================================================
 # PIPELINE RUNNER — Coco Stonks Lab
-# scripts/pipeline_runner.py
+# backend/backtesting/pipeline_runner.py
 #
 # Ejecuta experimentos en cola desde data/coco_lab.db de forma autónoma.
 # SIN modelo de IA. Consume jobs pendientes y guarda resultados en coco_lab.db
 #
 # Uso:
-#   python3 scripts/pipeline_runner.py              # corre todos los pending
-#   python3 scripts/pipeline_runner.py --limit 50   # solo los primeros 50
-#   python3 scripts/pipeline_runner.py --status      # ver estado de la cola
+#   python3 backend/backtesting/pipeline_runner.py              # corre todos los pending
+#   python3 backend/backtesting/pipeline_runner.py --limit 50   # solo los primeros 50
+#   python3 backend/backtesting/pipeline_runner.py --status      # ver estado de la cola
 # =============================================================================
 
 import sqlite3

@@ -15,7 +15,7 @@
 ```bash
 grep "def correr_backtest_" backend/backtesting/motor_base.py
 ```
-Si no existe → hay que implementarlo primero en `motor_base.py` (ver `trading-backtesting/scripts/motor_base.py` como referencia).
+Si no existe → hay que implementarlo primero en `motor_base.py` (ver `backend/backtesting/motor_base.py` como referencia).
 
 ### 2. Verificar que pipeline_runner.py la conoce
 ```bash

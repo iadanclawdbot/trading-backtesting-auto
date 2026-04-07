@@ -24,7 +24,7 @@ Endpoints:
   GET  /results/cycle   — Resultados de la última ejecución
   GET  /results/top     — Top N resultados de todos los tiempos
 
-Deploy: uvicorn autolab_api:app --host 0.0.0.0 --port 8000
+Deploy: uvicorn src.autolab_api:app --host 0.0.0.0 --port 8000
 """
 
 import os

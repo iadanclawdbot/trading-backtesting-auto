@@ -2,7 +2,7 @@
 
 > Documento vivo de planificación. Revisar y actualizar en cada sesión.
 > Marcar `[x]` al completar. Agregar ítems nuevos cuando aparezcan.
-> Última actualización: 2026-04-07
+> Última actualización: 2026-04-08
 
 ---
 
@@ -14,9 +14,9 @@
 | ------------------------------------ | --------------------------------------------- | ---------- |
 | autolab-api (`/health`)              | ✅ UP — sqlite y postgresql conectados        | 2026-04-08 |
 | n8n Main Loop (30min)                | ⚪ No verificado                              | —          |
-| n8n Daily Research (9am)             | ⚪ Cron puede estar en `*/3`                  | —          |
+| n8n Daily Research (9am)             | ✅ Cron `0 0 9 * * *` correcto                | 2026-04-08 |
 | n8n Chat Telegram                    | ⚪ No verificado                              | —          |
-| Supabase CHECK constraint            | ❌ Migración SQL pendiente                    | 2026-04-07 |
+| Supabase CHECK constraint            | ✅ Migración aplicada                         | 2026-04-08 |
 | GitHub repo creado                   | ✅ `iadanclawdbot/trading-backtesting-auto`   | 2026-04-07 |
 | Coolify apuntando a este repo        | ✅ Deployado — commit 948aca2                 | 2026-04-08 |
 | Fixes estancamiento (3 RCAs)         | ✅ En producción desde deploy 2026-04-08      | 2026-04-08 |
@@ -44,41 +44,17 @@ Hacer en orden. Bloquean todo lo demás.
   git remote add origin https://github.com/iadanclawdbot/trading-backtesting-auto.git
   git push -u origin main
   ```
-- [ ] **Actualizar Coolify** — apuntar al nuevo repo
-
-  - Repository → `iadanclawdbot/trading-backtesting-auto`
-  - Base Directory → `backend/`
-  - Dockerfile → `deploy/Dockerfile`
-  - Env var: `SCRIPTS_PATH` → `/app/backtesting`
-  - → Redeploy
-- [ ] **Verificar que funciona**
-
-  ```bash
-  curl https://autolab-api.dantelujan.online/health
-  # Esperado: {"status":"ok","sqlite":"connected","postgresql":"connected"}
-  ```
+- [x] **Actualizar Coolify** — deployado commit `948aca2` ✅ 2026-04-08
+- [x] **Verificar que funciona** — `/health` → sqlite:true, postgresql:true ✅ 2026-04-08
 
 ---
 
 ## 🟡 PENDIENTE — Deuda técnica heredada
 
-- [ ] **Migración SQL en Supabase** — CHECK constraint `outcome='testing'`
-
-  ```sql
-  ALTER TABLE external_research DROP CONSTRAINT IF EXISTS external_research_outcome_check;
-  ALTER TABLE external_research ADD CONSTRAINT external_research_outcome_check
-      CHECK (outcome IN ('pending', 'testing', 'promising', 'dead_end'));
-  ```
-
-  _Dónde: Supabase Studio → SQL Editor_
-- [ ] **Cron Daily Research** — verificar que está en `0 9 * * *` y no en `*/3 * * * *`
+- [x] **Migración SQL en Supabase** — CHECK constraint `outcome='testing'` aplicada ✅ 2026-04-08
+- [x] **Cron Daily Research** — verificado `0 0 9 * * *` (9am diario) ✅ 2026-04-08
   _Dónde: n8n UI → Workflow `WOJji6MHwdrsbTI1` → Cron node_
-- [ ] **Verificar cron Docker en servidor** — Si Coolify reasignó UUID al container, el cron que conecta autolab-api a la red de Supabase puede estar roto
-
-  ```bash
-  ssh oracle-vps && crontab -l
-  # Buscar: docker network connect pgo4kkk4sg80cg0wwkkg0css $(docker ps -q --filter 'name=...')
-  ```
+- [x] **Verificar cron Docker en servidor** — container `owcwccs8c8oowk0k80848c4c-054332678510` matchea filtro ✅ 2026-04-08
 
 ---
 
@@ -103,7 +79,7 @@ Hacer en orden. Bloquean todo lo demás.
 - [x] Fix RCA-1: filtro win_rate en /status y /context (`autolab_api.py`)
 - [x] Fix RCA-2: strip ghost params en /hypothesize (`autolab_api.py`)
 - [x] Fix RCA-3: mean_reversion habilitada en /hypothesize (`autolab_api.py`)
-- [ ] **Deploy en Coolify** — `git push` hecho, falta redeploy en Coolify para activar los fixes
+- [x] **Deploy en Coolify** — commit `948aca2` en producción ✅ 2026-04-08
 - [ ] **Verificar** — 24h después del deploy, revisar learnings para ver mean_reversion y params limpios
 
 ---

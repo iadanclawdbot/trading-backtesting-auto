@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+/* ─── Design Tokens ─────────────────────────────────────────── */
+@theme inline {
+  /* Fuentes */
+  --font-sans: var(--font-plex-sans);
+  --font-mono: var(--font-plex-mono);
+
+  /* Colores base — dark (default) */
+  --color-bg: #0d0f0e;
+  --color-surface: #131614;
+  --color-surface-elevated: #181c1a;
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-border-strong: rgba(255, 255, 255, 0.15);
+
+  /* Semanticos */
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+  --color-info: #60a5fa;
+  --color-purple: #c084fc;
+
+  /* Texto */
+  --color-text-primary: #f0f0f0;
+  --color-text-secondary: #a0a0a0;
+  --color-text-muted: #555555;
+
+  /* Estrategias */
+  --color-vwap: #4ade80;
+  --color-breakout: #60a5fa;
+  --color-mr: #fbbf24;
+  --color-ema: #c084fc;
+
+  /* Categorias learnings */
+  --color-cat-parameter: #60a5fa;
+  --color-cat-promising: #4ade80;
+  --color-cat-dead-end: #f87171;
+  --color-cat-ranking: #fbbf24;
+  --color-cat-research: #c084fc;
+}
+
+/* ─── Light theme override ──────────────────────────────────── */
+.light {
+  --color-bg: #f8f9f8;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #f0f2f0;
+  --color-border: rgba(0, 0, 0, 0.1);
+  --color-border-strong: rgba(0, 0, 0, 0.2);
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #555555;
+  --color-text-muted: #999999;
+}
+
+/* ─── Base styles ───────────────────────────────────────────── */
+html {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+/* Numeros siempre en mono */
+.mono {
+  font-family: var(--font-mono, monospace);
+}
+
+/* Scrollbar oscura */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 3px;
+}
+
+/* ─── Animaciones ────────────────────────────────────────────── */
+@keyframes pulse-opacity {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.animate-pulse-opacity {
+  animation: pulse-opacity 2s ease-in-out infinite;
+}

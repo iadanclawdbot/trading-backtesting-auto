@@ -63,3 +63,31 @@ Se identificaron 3 causas raíz con evidencia numérica:
 
 ---
 
+
+## 2026-04-08 — Build inicial del dashboard frontend
+
+### Contexto
+Se construyó el dashboard frontend de AutoLab desde cero en `frontend/`. La carpeta solo tenía 3 documentos de contexto (BACKEND_NOTES, brief, requisitos). Se ejecutó el plan ultra-detallado diseñado en plan mode.
+
+### Completado
+- Next.js 16.2.2 + React 19 + Tailwind CSS 4.1 + SWR + Recharts + Motion inicializado
+- Capa de datos: tipos TS verificados contra API real, hooks SWR con polling 30-60s
+- 14 componentes de dashboard conectados a los 5 endpoints disponibles
+- Layout responsive: sidebar colapsable (desktop) + bottom tabs (mobile)
+- Dark/light theme toggle persistente
+- Tooltips (?) explicativos en lenguaje simple en cada métrica
+- Gauge de fitness SVG, AutoresearchChart estilo Karpathy, RunsTable sortable
+- `npm run build` exitoso sin errores, HTTP 200 en dev server
+
+### Pendiente al cierre
+- Deploy en Vercel (configurar Root Directory `frontend/` + env var)
+- Error boundaries por sección
+- Animaciones Motion (fade-in staggered, spring numbers)
+- Features extra: candlestick (requiere endpoint), market metrics (CoinGecko)
+
+### Estado del sistema al cierre
+| Componente | Estado |
+|------------|--------|
+| AutoLab API | ✅ UP (health: ok) |
+| Dashboard frontend | ✅ Build exitoso, listo para deploy |
+| Deploy Vercel | ⏳ Pendiente configuración |

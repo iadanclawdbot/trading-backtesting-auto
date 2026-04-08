@@ -35,7 +35,7 @@ function GaugeArc({ value, benchmark }: { value: number; benchmark: number }) {
       />
       {value > 0 && (
         <path
-          d={`M ${start.x} ${start.y} A ${r} ${r} 0 ${valAngle > 90 ? 1 : 0} 1 ${valPos.x} ${valPos.y}`}
+          d={`M ${start.x} ${start.y} A ${r} ${r} 0 0 1 ${valPos.x} ${valPos.y}`}
           fill="none" stroke={fillColor} strokeWidth={strokeW} strokeLinecap="round"
           style={{ filter: `drop-shadow(0 0 6px ${beats ? "rgba(74,222,128,0.4)" : "rgba(251,191,36,0.3)"})` }}
         />

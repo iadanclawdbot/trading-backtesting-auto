@@ -26,9 +26,11 @@ interface ChartPoint {
   runningBest: number;
 }
 
-function buildData(results: Array<{ strategy: string; sharpe_oos: number; wr_oos: number; dd_oos: number }>): ChartPoint[] {
+function buildData(results: Array<{ strategy: string; sharpe_oos: number; wr_oos: number; dd_oos: number; created_at: string }>): ChartPoint[] {
+  // Sort chronologically — API returns sorted by Sharpe desc, but chart needs time order
+  const sorted = [...results].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   let best = -Infinity;
-  return results.map((r, i) => {
+  return sorted.map((r, i) => {
     const isImprovement = r.sharpe_oos > best;
     if (isImprovement) best = r.sharpe_oos;
     return { index: i + 1, sharpe: r.sharpe_oos, wr: r.wr_oos, dd: r.dd_oos, strategy: r.strategy, isImprovement, runningBest: best };

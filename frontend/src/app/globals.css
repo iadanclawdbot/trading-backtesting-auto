@@ -1,37 +1,49 @@
 @import "tailwindcss";
 
-/* ─── Design Tokens ─────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   AutoLab Dashboard — Design System
+   Trading terminal feel: dense, technical, serious
+   ═══════════════════════════════════════════════════════════════ */
+
 @theme inline {
-  /* Fuentes */
   --font-sans: var(--font-plex-sans);
   --font-mono: var(--font-plex-mono);
 
-  /* Colores base — dark (default) */
-  --color-bg: #0d0f0e;
-  --color-surface: #131614;
-  --color-surface-elevated: #181c1a;
-  --color-border: rgba(255, 255, 255, 0.07);
-  --color-border-strong: rgba(255, 255, 255, 0.15);
+  /* Surfaces — layered depth */
+  --color-bg: #080a09;
+  --color-surface-0: #0d0f0e;
+  --color-surface-1: #131614;
+  --color-surface-2: #181c1a;
+  --color-surface-3: #1e2321;
 
-  /* Semanticos */
-  --color-success: #4ade80;
-  --color-warning: #fbbf24;
-  --color-danger: #f87171;
-  --color-info: #60a5fa;
+  /* Borders — very subtle */
+  --color-border: rgba(255, 255, 255, 0.06);
+  --color-border-hover: rgba(255, 255, 255, 0.12);
+
+  /* Accent colors */
+  --color-green: #4ade80;
+  --color-green-dim: #4ade8030;
+  --color-amber: #fbbf24;
+  --color-amber-dim: #fbbf2430;
+  --color-red: #f87171;
+  --color-red-dim: #f8717130;
+  --color-blue: #60a5fa;
+  --color-blue-dim: #60a5fa30;
   --color-purple: #c084fc;
+  --color-purple-dim: #c084fc30;
 
-  /* Texto */
-  --color-text-primary: #f0f0f0;
-  --color-text-secondary: #a0a0a0;
-  --color-text-muted: #555555;
+  /* Text */
+  --color-text-0: #f0f2f1;
+  --color-text-1: #9ca3af;
+  --color-text-2: #4b5563;
 
-  /* Estrategias */
+  /* Strategy colors */
   --color-vwap: #4ade80;
   --color-breakout: #60a5fa;
   --color-mr: #fbbf24;
   --color-ema: #c084fc;
 
-  /* Categorias learnings */
+  /* Learning category colors */
   --color-cat-parameter: #60a5fa;
   --color-cat-promising: #4ade80;
   --color-cat-dead-end: #f87171;
@@ -39,57 +51,101 @@
   --color-cat-research: #c084fc;
 }
 
-/* ─── Light theme override ──────────────────────────────────── */
+/* ─── Light override ──────────────────────────────────────── */
 .light {
-  --color-bg: #f8f9f8;
-  --color-surface: #ffffff;
-  --color-surface-elevated: #f0f2f0;
-  --color-border: rgba(0, 0, 0, 0.1);
-  --color-border-strong: rgba(0, 0, 0, 0.2);
-  --color-text-primary: #1a1a1a;
-  --color-text-secondary: #555555;
-  --color-text-muted: #999999;
+  --color-bg: #f5f6f5;
+  --color-surface-0: #ffffff;
+  --color-surface-1: #f8f9f8;
+  --color-surface-2: #f0f1f0;
+  --color-surface-3: #e8e9e8;
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-border-hover: rgba(0, 0, 0, 0.15);
+  --color-text-0: #111827;
+  --color-text-1: #4b5563;
+  --color-text-2: #9ca3af;
+  --color-green-dim: #4ade8018;
+  --color-amber-dim: #fbbf2418;
+  --color-red-dim: #f8717118;
+  --color-blue-dim: #60a5fa18;
+  --color-purple-dim: #c084fc18;
 }
 
-/* ─── Base styles ───────────────────────────────────────────── */
-html {
-  color-scheme: dark;
-}
-
-html.light {
-  color-scheme: light;
-}
+/* ─── Base ────────────────────────────────────────────────── */
+html { color-scheme: dark; }
+html.light { color-scheme: light; }
 
 body {
-  background-color: var(--color-bg);
-  color: var(--color-text-primary);
+  background: var(--color-bg);
+  color: var(--color-text-0);
   font-family: var(--font-sans, system-ui, sans-serif);
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Numeros siempre en mono */
-.mono {
+/* ─── Utility classes ─────────────────────────────────────── */
+
+/* Numbers — always mono, tabular */
+.num {
   font-family: var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
 }
 
-/* Scrollbar oscura */
-::-webkit-scrollbar {
+/* Glow on key values */
+.glow-green { text-shadow: 0 0 20px rgba(74, 222, 128, 0.3); }
+.glow-red   { text-shadow: 0 0 20px rgba(248, 113, 113, 0.3); }
+.glow-amber { text-shadow: 0 0 20px rgba(251, 191, 36, 0.3); }
+
+/* Pill badge base */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.5;
+  border: 1px solid;
+}
+
+/* Panel — base card style */
+.panel {
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  transition: border-color 0.2s;
+}
+.panel:hover {
+  border-color: var(--color-border-hover);
+}
+
+/* Status dot */
+.dot {
   width: 6px;
   height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
-::-webkit-scrollbar-track {
-  background: var(--color-surface);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--color-border-strong);
-  border-radius: 3px;
+.dot-ok { background: var(--color-green); box-shadow: 0 0 6px rgba(74, 222, 128, 0.5); }
+.dot-err { background: var(--color-red); box-shadow: 0 0 6px rgba(248, 113, 113, 0.5); }
+.dot-warn { background: var(--color-amber); }
+
+/* Section label */
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-2);
 }
 
-/* ─── Animaciones ────────────────────────────────────────────── */
-@keyframes pulse-opacity {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border-hover); border-radius: 2px; }
 
-.animate-pulse-opacity {
-  animation: pulse-opacity 2s ease-in-out infinite;
-}
+/* ─── Animations ──────────────────────────────────────────── */
+@keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+.animate-in { animation: fade-in 0.4s ease-out both; }
+.animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }

@@ -13,7 +13,6 @@ interface State {
   errorMsg: string;
 }
 
-// Error boundary de clase — necesario para capturar errores de render en React
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -27,20 +26,20 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="rounded-xl border border-[var(--color-danger)]/20 bg-[var(--color-surface)] p-4">
+        <div className="panel p-4 !border-[var(--color-red-dim)]">
           <div className="flex items-start gap-3">
-            <span className="text-[var(--color-danger)] text-lg">⚠</span>
+            <span className="text-[var(--color-red)] text-lg">&#9888;</span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-[var(--color-text-primary)]">
+              <p className="text-[12px] font-medium text-[var(--color-text-0)]">
                 {this.props.fallbackTitle ?? "Error al cargar esta sección"}
               </p>
-              <p className="text-xs text-[var(--color-text-muted)] mt-1 truncate">
+              <p className="text-[11px] text-[var(--color-text-2)] mt-1 truncate">
                 {this.state.errorMsg}
               </p>
             </div>
             <button
               onClick={() => this.setState({ hasError: false, errorMsg: "" })}
-              className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors shrink-0"
+              className="flex items-center gap-1.5 text-[11px] text-[var(--color-text-2)] hover:text-[var(--color-text-0)] transition-colors shrink-0"
             >
               <RefreshCw className="h-3 w-3" />
               Reintentar

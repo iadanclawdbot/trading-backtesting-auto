@@ -9,10 +9,10 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  Area,
 } from "recharts";
 import { useApiContext } from "@/hooks/use-api";
 import { MetricCard } from "./metric-card";
-import { TooltipHelp } from "./tooltip-help";
 import { getStrategy, BENCHMARK_FITNESS } from "@/lib/constants";
 import { formatSharpe, formatPercent } from "@/lib/formatters";
 
@@ -26,52 +26,44 @@ interface ChartPoint {
   runningBest: number;
 }
 
-function buildChartData(topResults: Array<{
-  strategy: string;
-  sharpe_oos: number;
-  wr_oos: number;
-  dd_oos: number;
-}>): ChartPoint[] {
-  let runningBest = 0;
-  return topResults.map((r, i) => {
-    const isImprovement = r.sharpe_oos > runningBest;
-    if (isImprovement) runningBest = r.sharpe_oos;
-    return {
-      index: i + 1,
-      sharpe: r.sharpe_oos,
-      wr: r.wr_oos,
-      dd: r.dd_oos,
-      strategy: r.strategy,
-      isImprovement,
-      runningBest: isImprovement ? r.sharpe_oos : runningBest,
-    };
+function buildData(results: Array<{ strategy: string; sharpe_oos: number; wr_oos: number; dd_oos: number }>): ChartPoint[] {
+  let best = -Infinity;
+  return results.map((r, i) => {
+    const isImprovement = r.sharpe_oos > best;
+    if (isImprovement) best = r.sharpe_oos;
+    return { index: i + 1, sharpe: r.sharpe_oos, wr: r.wr_oos, dd: r.dd_oos, strategy: r.strategy, isImprovement, runningBest: best };
   });
 }
 
-// Tooltip custom del grafico
-function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: ChartPoint }> }) {
+function ChartTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: ChartPoint }> }) {
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   const strat = getStrategy(d.strategy);
   return (
-    <div className="rounded-lg border border-[var(--color-border-strong)] bg-[var(--color-surface-elevated)] p-3 text-xs shadow-xl">
-      <div className="flex items-center gap-2 mb-2">
-        <span
-          className="inline-block h-2 w-2 rounded-full"
-          style={{ backgroundColor: strat.color }}
-        />
-        <span className="font-medium text-[var(--color-text-primary)]">
-          Exp #{d.index} — {strat.label}
-        </span>
+    <div className="panel p-3 text-[11px] shadow-2xl !bg-[var(--color-surface-2)] min-w-[160px]">
+      <div className="flex items-center gap-1.5 mb-2">
+        <span className="dot" style={{ background: strat.color }} />
+        <span className="font-medium text-[var(--color-text-0)]">#{d.index} {strat.label}</span>
       </div>
-      <div className="space-y-1 text-[var(--color-text-secondary)]">
-        <div>Sharpe OOS: <span className="font-mono text-[var(--color-text-primary)]">{formatSharpe(d.sharpe)}</span></div>
-        <div>Win Rate: <span className="font-mono text-[var(--color-text-primary)]">{formatPercent(d.wr, false)}</span></div>
-        <div>Max DD: <span className="font-mono text-[var(--color-danger)]">{formatPercent(d.dd)}</span></div>
-        {d.isImprovement && (
-          <div className="text-[var(--color-success)] mt-1">✓ Nuevo mejor resultado</div>
-        )}
+      <div className="space-y-1 text-[var(--color-text-1)]">
+        <div className="flex justify-between">
+          <span>Sharpe OOS</span>
+          <span className="num font-medium text-[var(--color-text-0)]">{formatSharpe(d.sharpe)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Win Rate</span>
+          <span className="num">{formatPercent(d.wr, false)}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Max DD</span>
+          <span className="num text-[var(--color-red)]">{formatPercent(d.dd)}</span>
+        </div>
       </div>
+      {d.isImprovement && (
+        <div className="mt-2 pt-2 border-t border-[var(--color-border)] text-[var(--color-green)] font-medium">
+          ✓ Nuevo mejor resultado
+        </div>
+      )}
     </div>
   );
 }
@@ -81,121 +73,112 @@ export function AutoresearchChart() {
 
   if (isLoading && !data) {
     return (
-      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+      <div className="panel p-5">
         <div className="animate-pulse">
-          <div className="h-3 w-48 rounded bg-white/10 mb-4" />
-          <div className="h-64 w-full rounded bg-white/5" />
+          <div className="h-2.5 w-48 rounded bg-[var(--color-surface-3)] mb-6" />
+          <div className="h-[220px] w-full rounded bg-[var(--color-surface-0)]" />
         </div>
       </div>
     );
   }
 
   const results = data?.top_results ?? [];
-  const chartData = buildChartData(results);
-
-  // Separar mejoras vs descartados para dos series Scatter
+  const chartData = buildData(results);
   const improvements = chartData.filter((d) => d.isImprovement);
   const discarded = chartData.filter((d) => !d.isImprovement);
 
-  // Datos para la linea escalonada de running best
-  const lineData = chartData.map((d) => ({ index: d.index, runningBest: d.runningBest }));
-
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-      <div className="flex items-center gap-2 mb-4">
-        <h3 className="text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">
-          Progreso de la investigación autónoma
-        </h3>
-        <TooltipHelp term="autoresearch" />
+    <div className="panel p-5">
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <span className="section-label">Progreso de la investigación autónoma</span>
+        </div>
+        <div className="flex items-center gap-4 text-[10px] text-[var(--color-text-2)]">
+          <div className="flex items-center gap-1.5">
+            <span className="block h-2 w-2 rounded-full bg-[var(--color-green)]" />
+            Mejoras ({improvements.length})
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="block h-2 w-2 rounded-full bg-[var(--color-surface-3)]" />
+            Descartados ({discarded.length})
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="block h-[2px] w-3 bg-[var(--color-amber)] opacity-70" />
+            Benchmark
+          </div>
+        </div>
       </div>
 
       {results.length === 0 ? (
-        <div className="flex h-48 items-center justify-center">
-          <p className="text-sm text-[var(--color-text-muted)]">Sin datos aún</p>
+        <div className="flex h-48 items-center justify-center text-sm text-[var(--color-text-2)]">
+          Sin datos aún
         </div>
       ) : (
-        <>
-          <ResponsiveContainer width="100%" height={240}>
-            <ComposedChart margin={{ top: 5, right: 10, bottom: 5, left: 10 }}>
-              {/* Benchmark */}
-              <ReferenceLine
-                y={BENCHMARK_FITNESS}
-                stroke="var(--color-warning)"
-                strokeDasharray="4 3"
-                strokeWidth={1}
-                label={{ value: `Benchmark ${BENCHMARK_FITNESS}`, position: "insideTopRight", fill: "var(--color-warning)", fontSize: 10 }}
-                yAxisId="left"
-              />
+        <ResponsiveContainer width="100%" height={220}>
+          <ComposedChart margin={{ top: 5, right: 10, bottom: 5, left: 0 }}>
+            <defs>
+              <linearGradient id="bestFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--color-green)" stopOpacity={0.15} />
+                <stop offset="100%" stopColor="var(--color-green)" stopOpacity={0} />
+              </linearGradient>
+            </defs>
 
-              <XAxis
-                dataKey="index"
-                type="number"
-                tick={{ fill: "var(--color-text-muted)", fontSize: 10 }}
-                tickLine={false}
-                axisLine={{ stroke: "var(--color-border)" }}
-                label={{ value: "Experimento #", position: "insideBottomRight", offset: -5, fill: "var(--color-text-muted)", fontSize: 10 }}
-              />
-              <YAxis
-                yAxisId="left"
-                tick={{ fill: "var(--color-text-muted)", fontSize: 10 }}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(v) => v.toFixed(1)}
-                label={{ value: "Sharpe OOS", angle: -90, position: "insideLeft", fill: "var(--color-text-muted)", fontSize: 10 }}
-              />
+            <ReferenceLine
+              y={BENCHMARK_FITNESS}
+              stroke="var(--color-amber)"
+              strokeDasharray="4 3"
+              strokeWidth={1}
+              strokeOpacity={0.5}
+              yAxisId="left"
+            />
 
-              {/* Tooltip */}
-              <Tooltip content={<CustomTooltip />} />
+            <XAxis
+              dataKey="index"
+              type="number"
+              tick={{ fill: "var(--color-text-2)", fontSize: 10 }}
+              tickLine={false}
+              axisLine={false}
+            />
+            <YAxis
+              yAxisId="left"
+              tick={{ fill: "var(--color-text-2)", fontSize: 10 }}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(v: number) => v.toFixed(1)}
+              width={35}
+            />
 
-              {/* Experimentos descartados — puntos grises */}
-              <Scatter
-                data={discarded}
-                dataKey="sharpe"
-                xAxisId={undefined}
-                yAxisId="left"
-                fill="rgba(255,255,255,0.15)"
-                r={3}
-              />
+            <Tooltip content={<ChartTooltip />} cursor={false} />
 
-              {/* Mejoras retenidas — puntos verdes */}
-              <Scatter
-                data={improvements}
-                dataKey="sharpe"
-                yAxisId="left"
-                fill="var(--color-success)"
-                r={5}
-              />
+            {/* Running best area fill */}
+            <Area
+              data={chartData}
+              type="stepAfter"
+              dataKey="runningBest"
+              yAxisId="left"
+              stroke="none"
+              fill="url(#bestFill)"
+            />
 
-              {/* Linea escalonada del running best */}
-              <Line
-                data={lineData}
-                type="stepAfter"
-                dataKey="runningBest"
-                yAxisId="left"
-                stroke="var(--color-success)"
-                strokeWidth={2}
-                dot={false}
-                activeDot={false}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
+            {/* Descartados */}
+            <Scatter data={discarded} dataKey="sharpe" yAxisId="left" fill="var(--color-surface-3)" fillOpacity={0.8} r={2.5} />
 
-          {/* Leyenda */}
-          <div className="flex items-center gap-4 mt-3 text-xs text-[var(--color-text-muted)]">
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-[var(--color-success)]" />
-              <span>Mejoras ({improvements.length})</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-white/20" />
-              <span>Descartados ({discarded.length})</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="block h-0.5 w-4 bg-[var(--color-warning)] opacity-70" />
-              <span>Benchmark</span>
-            </div>
-          </div>
-        </>
+            {/* Mejoras */}
+            <Scatter data={improvements} dataKey="sharpe" yAxisId="left" fill="var(--color-green)" r={4} />
+
+            {/* Running best line */}
+            <Line
+              data={chartData}
+              type="stepAfter"
+              dataKey="runningBest"
+              yAxisId="left"
+              stroke="var(--color-green)"
+              strokeWidth={2}
+              dot={false}
+              activeDot={false}
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
       )}
     </div>
   );

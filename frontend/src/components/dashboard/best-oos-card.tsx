@@ -1,8 +1,7 @@
 "use client";
 
 import { useStatus } from "@/hooks/use-api";
-import { MetricCard } from "./metric-card";
-import { TooltipHelp } from "./tooltip-help";
+import { MetricCard, BigNumber, Stat } from "./metric-card";
 import { getStrategy, BENCHMARK_FITNESS } from "@/lib/constants";
 import { formatSharpe, formatPercent, timeAgo } from "@/lib/formatters";
 
@@ -10,86 +9,56 @@ export function BestOOSCard() {
   const { data, isLoading } = useStatus();
 
   if (isLoading && !data) {
-    return <MetricCard title="Mejor resultado OOS" loading />;
+    return <MetricCard title="Mejor OOS" loading />;
   }
 
   const best = data?.best_oos;
   if (!best) {
     return (
-      <MetricCard title="Mejor resultado OOS">
-        <p className="mt-2 text-sm text-[var(--color-text-muted)]">Sin datos</p>
+      <MetricCard title="Mejor OOS">
+        <p className="mt-3 text-sm text-[var(--color-text-2)]">Sin datos</p>
       </MetricCard>
     );
   }
 
-  const strategy = getStrategy(best.strategy);
-  const beatsBenchmark = best.sharpe_ratio > BENCHMARK_FITNESS;
+  const strat = getStrategy(best.strategy);
+  const beats = best.sharpe_ratio > BENCHMARK_FITNESS;
 
   return (
-    <MetricCard
-      title="Mejor resultado OOS"
-      variant={beatsBenchmark ? "success" : "default"}
-    >
-      {/* Estrategia */}
-      <div className="mt-2 mb-3">
+    <MetricCard title="Mejor OOS" tooltip="sharpe_oos">
+      <div className="mt-3 space-y-4">
+        {/* Strategy pill */}
         <span
-          className="inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium"
+          className="pill"
           style={{
-            backgroundColor: `${strategy.color}20`,
-            color: strategy.color,
-            border: `1px solid ${strategy.color}40`,
+            background: `${strat.color}15`,
+            borderColor: `${strat.color}40`,
+            color: strat.color,
           }}
         >
-          {strategy.label}
+          <span className="dot" style={{ background: strat.color }} />
+          {strat.label}
         </span>
-      </div>
 
-      {/* Sharpe principal */}
-      <div className="flex items-baseline gap-2 mb-1">
-        <div className="flex items-center gap-1">
-          <span className="font-mono text-2xl font-bold text-[var(--color-text-primary)]">
-            {formatSharpe(best.sharpe_ratio)}
-          </span>
-          <TooltipHelp term="sharpe_oos" />
+        {/* Sharpe hero */}
+        <div className="flex items-baseline gap-3">
+          <BigNumber value={formatSharpe(best.sharpe_ratio)} glow={beats ? "green" : undefined} />
+          {beats && (
+            <span className="text-xs text-[var(--color-green)] font-medium">
+              ✓ supera benchmark
+            </span>
+          )}
         </div>
-        {beatsBenchmark && (
-          <span className="text-xs text-[var(--color-success)]">✓ supera benchmark</span>
-        )}
-      </div>
-      <p className="text-xs text-[var(--color-text-muted)] mb-3">Sharpe OOS</p>
 
-      {/* Grid de stats */}
-      <div className="grid grid-cols-3 gap-3 pt-3 border-t border-[var(--color-border)]">
-        <div>
-          <div className="flex items-center gap-1 mb-1">
-            <span className="text-xs text-[var(--color-text-muted)]">Win Rate</span>
-            <TooltipHelp term="win_rate" />
-          </div>
-          <span className="font-mono text-sm font-medium">
-            {formatPercent(best.win_rate, false)}
-          </span>
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-4 pt-3 border-t border-[var(--color-border)]">
+          <Stat label="Win Rate" value={formatPercent(best.win_rate, false)} tooltip="win_rate" />
+          <Stat label="Max DD" value={formatPercent(best.max_drawdown)} tooltip="max_drawdown" color="var(--color-red)" />
+          <Stat label="Trades" value={String(best.total_trades)} />
         </div>
-        <div>
-          <div className="flex items-center gap-1 mb-1">
-            <span className="text-xs text-[var(--color-text-muted)]">Max DD</span>
-            <TooltipHelp term="max_drawdown" />
-          </div>
-          <span
-            className="font-mono text-sm font-medium"
-            style={{ color: "var(--color-danger)" }}
-          >
-            {formatPercent(best.max_drawdown)}
-          </span>
-        </div>
-        <div>
-          <span className="text-xs text-[var(--color-text-muted)] block mb-1">Trades</span>
-          <span className="font-mono text-sm font-medium">{best.total_trades}</span>
-        </div>
-      </div>
 
-      <p className="mt-3 text-xs text-[var(--color-text-muted)]">
-        {timeAgo(best.created_at)}
-      </p>
+        <p className="text-[10px] text-[var(--color-text-2)] num">{timeAgo(best.created_at)}</p>
+      </div>
     </MetricCard>
   );
 }

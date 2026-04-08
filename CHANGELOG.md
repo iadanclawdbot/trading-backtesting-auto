@@ -79,15 +79,21 @@ Se construyó el dashboard frontend de AutoLab desde cero en `frontend/`. La car
 - Gauge de fitness SVG, AutoresearchChart estilo Karpathy, RunsTable sortable
 - `npm run build` exitoso sin errores, HTTP 200 en dev server
 
+**Rediseño visual completo** (mismo día, segunda iteración):
+- Nuevo design system: superficies con profundidad (#080a09 → #1e2321), `.panel/.pill/.dot/.num/.glow-*` utilities
+- Todos los 14 componentes reescritos con nuevo sistema de color (text-0/1/2, surface-0/1/2/3)
+- Error boundaries con retry en cada sección
+- CSS `animate-in` con stagger delays (eliminada dependencia de Motion en page.tsx)
+- Variables de categoría de learnings agregadas a globals.css
+- Light theme completo verificado visualmente
+
 ### Pendiente al cierre
-- Deploy en Vercel (configurar Root Directory `frontend/` + env var)
-- Error boundaries por sección
-- Animaciones Motion (fade-in staggered, spring numbers)
-- Features extra: candlestick (requiere endpoint), market metrics (CoinGecko)
+- Deploy en Vercel (configurar Root Directory `frontend/` + env var `NEXT_PUBLIC_API_URL`)
+- Features extra: candlestick (requiere endpoint backend), market metrics (CoinGecko API)
 
 ### Estado del sistema al cierre
 | Componente | Estado |
 |------------|--------|
 | AutoLab API | ✅ UP (health: ok) |
-| Dashboard frontend | ✅ Build exitoso, listo para deploy |
-| Deploy Vercel | ⏳ Pendiente configuración |
+| Dashboard frontend | ✅ Build exitoso, rediseño completo, dark+light, mobile+desktop |
+| Deploy Vercel | ⏳ Pendiente push + configuración |

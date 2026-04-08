@@ -9,7 +9,7 @@ export const STRATEGIES: Record<string, { label: string; color: string }> = {
 };
 
 export function getStrategy(name: string) {
-  return STRATEGIES[name] ?? { label: name, color: "var(--color-text-secondary)" };
+  return STRATEGIES[name] ?? { label: name, color: "var(--color-text-1)" };
 }
 
 // ─── Categorias de learnings ────────────────────────────────────────────────

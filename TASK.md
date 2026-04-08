@@ -86,18 +86,21 @@ Hacer en orden. Bloquean todo lo demás.
 
 ## 🔵 MEDIANO PLAZO — Frontend dashboard
 
-- [ ] **Definir stack** — React + Vite (recomendado: solo usuarios logueados, sin SEO)
-- [ ] **Páginas mínimas**
-  - `/` → estado general (campeón, último ciclo, learnings recientes)
-  - `/ciclos` → historial de ciclos (Sharpe OOS, capital, beat benchmark)
-  - `/learnings` → tabla de learnings por categoría y confianza
-  - `/experimentos` → cola actual + runs recientes
-- [ ] **Conexión a API** — los endpoints ya están listos:
-  - `GET /status` → campeón + benchmark
-  - `GET /context` → top runs + learnings
-  - `GET /learnings` → tabla de learnings
-  - `GET /results/cycle?batch_id=X` → detalle de un ciclo
-- [ ] **Deploy en Coolify** — Base Directory: `frontend/`
+- [x] **Definir stack** — Next.js 16.2.2 + Tailwind 4.1 + Recharts + SWR ✅ 2026-04-08
+- [x] **Páginas implementadas** ✅ 2026-04-08
+  - `/` → Dashboard completo: campeón, best OOS, fitness gauge, cola, donut, learnings bars, autoresearch chart, runs table, learnings feed, opus insights
+  - `/learnings` → Learnings por categoría + feed completo con filtros
+  - `/insights` → Panel de insights estratégicos Opus
+- [x] **Conexión a API** — 5 endpoints conectados con SWR polling (30-60s) ✅ 2026-04-08
+  - `GET /health` → status dots (API, SQLite, PG)
+  - `GET /status` → campeón + best OOS + cola + benchmark
+  - `GET /context?top_n=N` → autoresearch chart + runs table
+  - `GET /learnings` → feed + barras por categoría
+  - `GET /opus-insights` → panel de insights
+- [x] **Design system profesional** — dark/light toggle, IBM Plex fonts, layered surfaces, glow effects, pill badges ✅ 2026-04-08
+- [x] **Responsive mobile-first** — sidebar desktop + bottom tabs mobile ✅ 2026-04-08
+- [x] **Tooltips (?)** — 16 métricas explicadas en lenguaje simple ✅ 2026-04-08
+- [ ] **Deploy en Vercel** — Root Directory: `frontend/`, pendiente push y config
 
 ---
 

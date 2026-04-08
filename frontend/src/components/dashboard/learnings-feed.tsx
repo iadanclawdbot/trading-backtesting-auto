@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Filter } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useLearnings } from "@/hooks/use-api";
 import { MetricCard } from "./metric-card";
-import { TooltipHelp } from "./tooltip-help";
 import { LEARNING_CATEGORIES } from "@/lib/constants";
 import { LearningCategory, Learning } from "@/types/api";
 import { timeAgo } from "@/lib/formatters";
@@ -12,180 +11,115 @@ import { cn } from "@/lib/utils";
 
 function LearningItem({ learning }: { learning: Learning }) {
   const [expanded, setExpanded] = useState(false);
-  const config = LEARNING_CATEGORIES[learning.category];
-  const confidencePct = Math.round(learning.confidence * 100);
+  const cfg = LEARNING_CATEGORIES[learning.category];
+  const confPct = Math.round(learning.confidence * 100);
 
   return (
     <div
-      className="group cursor-pointer rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-elevated)] p-3 hover:border-[var(--color-border-strong)] transition-colors"
+      className="cursor-pointer rounded-lg bg-[var(--color-surface-0)] p-3 hover:bg-[var(--color-surface-2)] transition-colors border border-transparent hover:border-[var(--color-border)]"
       onClick={() => setExpanded((e) => !e)}
     >
-      {/* Header del item */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-sm">{config.emoji}</span>
-          <span
-            className="text-xs font-medium rounded px-1.5 py-0.5"
-            style={{
-              backgroundColor: `${config.color}20`,
-              color: config.color,
-            }}
-          >
-            {config.label}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs text-[var(--color-text-muted)]">
-            {timeAgo(learning.created_at)}
-          </span>
-          {expanded ? (
-            <ChevronUp className="h-3 w-3 text-[var(--color-text-muted)]" />
-          ) : (
-            <ChevronDown className="h-3 w-3 text-[var(--color-text-muted)]" />
-          )}
-        </div>
+      <div className="flex items-center justify-between gap-2">
+        <span
+          className="pill text-[10px]"
+          style={{ background: `${cfg.color}12`, borderColor: `${cfg.color}30`, color: cfg.color }}
+        >
+          {cfg.label}
+        </span>
+        <span className="text-[10px] text-[var(--color-text-2)] num shrink-0">
+          {confPct}% · {timeAgo(learning.created_at)}
+        </span>
       </div>
 
-      {/* Contenido */}
-      <p
-        className={cn(
-          "mt-2 text-xs text-[var(--color-text-secondary)] leading-relaxed",
-          !expanded && "line-clamp-2"
-        )}
-      >
+      <p className={cn("mt-2 text-[12px] text-[var(--color-text-1)] leading-relaxed", !expanded && "line-clamp-2")}>
         {learning.content}
       </p>
 
-      {/* Barra de confianza */}
-      <div className="mt-2 flex items-center gap-2">
-        <div className="flex-1 h-1 rounded-full bg-white/10 overflow-hidden">
-          <div
-            className="h-full rounded-full"
-            style={{
-              width: `${confidencePct}%`,
-              backgroundColor: config.color,
-              opacity: 0.7,
-            }}
-          />
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="text-xs text-[var(--color-text-muted)] font-mono">
-            {confidencePct}%
-          </span>
-          <TooltipHelp term="confidence" />
-        </div>
+      {/* Confidence bar */}
+      <div className="mt-2 h-[3px] w-full rounded-full bg-[var(--color-surface-3)] overflow-hidden">
+        <div className="h-full rounded-full" style={{ width: `${confPct}%`, background: cfg.color, opacity: 0.6 }} />
       </div>
     </div>
   );
 }
 
-const ALL_CATEGORIES = Object.keys(LEARNING_CATEGORIES) as LearningCategory[];
+const ALL_CATS = Object.keys(LEARNING_CATEGORIES) as LearningCategory[];
 
 export function LearningsFeed() {
   const { data, isLoading } = useLearnings();
   const [isOpen, setIsOpen] = useState(true);
-  const [activeFilter, setActiveFilter] = useState<LearningCategory | "all">("all");
+  const [filter, setFilter] = useState<LearningCategory | "all">("all");
   const [showAll, setShowAll] = useState(false);
 
-  if (isLoading && !data) {
-    return <MetricCard title="Razonamiento del agente IA" loading />;
-  }
+  if (isLoading && !data) return <MetricCard title="Razonamiento del agente IA" loading />;
 
-  const allLearnings = data?.learnings ?? [];
-  const filtered =
-    activeFilter === "all"
-      ? allLearnings
-      : allLearnings.filter((l) => l.category === activeFilter);
-
-  const visible = showAll ? filtered : filtered.slice(0, 6);
+  const all = data?.learnings ?? [];
+  const filtered = filter === "all" ? all : all.filter((l) => l.category === filter);
+  const visible = showAll ? filtered : filtered.slice(0, 5);
 
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
-      {/* Header colapsable — div en vez de button para evitar button-dentro-button con TooltipHelp */}
+    <div className="panel">
+      {/* Header */}
       <div
         role="button"
         tabIndex={0}
-        className="flex w-full items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors rounded-t-xl cursor-pointer"
+        className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-[var(--color-surface-2)] transition-colors rounded-t-xl"
         onClick={() => setIsOpen((o) => !o)}
         onKeyDown={(e) => e.key === "Enter" && setIsOpen((o) => !o)}
       >
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">
-            Razonamiento del agente IA
-          </h3>
-          <TooltipHelp term="learnings_feed" />
-          <span className="text-xs text-[var(--color-text-muted)]">
-            ({allLearnings.length} aprendizajes)
-          </span>
+          <span className="section-label">Razonamiento del agente IA</span>
+          <span className="text-[10px] text-[var(--color-text-2)] num">({all.length})</span>
         </div>
-        {isOpen ? (
-          <ChevronUp className="h-4 w-4 text-[var(--color-text-muted)]" />
-        ) : (
-          <ChevronDown className="h-4 w-4 text-[var(--color-text-muted)]" />
-        )}
+        {isOpen ? <ChevronUp className="h-3.5 w-3.5 text-[var(--color-text-2)]" /> : <ChevronDown className="h-3.5 w-3.5 text-[var(--color-text-2)]" />}
       </div>
 
       {isOpen && (
         <div className="px-4 pb-4">
-          {/* Filtros por categoria */}
-          <div className="flex flex-wrap gap-1.5 mb-4 pb-3 border-b border-[var(--color-border)]">
+          {/* Filter pills */}
+          <div className="flex flex-wrap gap-1.5 mb-3 pb-3 border-b border-[var(--color-border)]">
             <button
-              onClick={() => setActiveFilter("all")}
-              className={cn(
-                "flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors",
-                activeFilter === "all"
-                  ? "bg-white/15 text-[var(--color-text-primary)]"
-                  : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+              onClick={() => setFilter("all")}
+              className={cn("pill text-[10px] cursor-pointer transition-colors",
+                filter === "all" ? "bg-[var(--color-surface-3)] border-[var(--color-border-hover)] text-[var(--color-text-0)]" : "border-transparent text-[var(--color-text-2)] hover:text-[var(--color-text-1)]"
               )}
             >
-              <Filter className="h-3 w-3" />
               Todos
             </button>
-            {ALL_CATEGORIES.map((cat) => {
-              const config = LEARNING_CATEGORIES[cat];
-              const count = allLearnings.filter((l) => l.category === cat).length;
+            {ALL_CATS.map((cat) => {
+              const cfg = LEARNING_CATEGORIES[cat];
+              const n = all.filter((l) => l.category === cat).length;
+              const active = filter === cat;
               return (
                 <button
                   key={cat}
-                  onClick={() => setActiveFilter(cat)}
-                  className={cn(
-                    "rounded-md px-2 py-1 text-xs transition-colors",
-                    activeFilter === cat
-                      ? "text-[var(--color-text-primary)]"
-                      : "text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
-                  )}
-                  style={
-                    activeFilter === cat
-                      ? { backgroundColor: `${config.color}25`, color: config.color }
-                      : {}
+                  onClick={() => setFilter(cat)}
+                  className="pill text-[10px] cursor-pointer transition-colors"
+                  style={active
+                    ? { background: `${cfg.color}18`, borderColor: `${cfg.color}40`, color: cfg.color }
+                    : { borderColor: "transparent", color: "var(--color-text-2)" }
                   }
                 >
-                  {config.emoji} {config.label} ({count})
+                  {cfg.label} ({n})
                 </button>
               );
             })}
           </div>
 
-          {/* Lista de learnings */}
+          {/* Items */}
           <div className="space-y-2">
-            {visible.length === 0 ? (
-              <p className="text-sm text-[var(--color-text-muted)]">
-                Sin aprendizajes en esta categoría
-              </p>
-            ) : (
-              visible.map((l) => <LearningItem key={l.id} learning={l} />)
-            )}
+            {visible.length === 0
+              ? <p className="text-sm text-[var(--color-text-2)] py-2">Sin resultados</p>
+              : visible.map((l) => <LearningItem key={l.id} learning={l} />)
+            }
           </div>
 
-          {/* Ver mas / menos */}
-          {filtered.length > 6 && (
+          {filtered.length > 5 && (
             <button
               onClick={() => setShowAll((s) => !s)}
-              className="mt-3 w-full text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors py-2"
+              className="mt-3 w-full text-[11px] text-[var(--color-text-2)] hover:text-[var(--color-text-0)] transition-colors py-1.5 num"
             >
-              {showAll
-                ? "Ver menos"
-                : `Ver ${filtered.length - 6} aprendizajes más...`}
+              {showAll ? "Mostrar menos" : `Ver ${filtered.length - 5} más…`}
             </button>
           )}
         </div>

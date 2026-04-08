@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "motion/react";
 import { SystemHealth } from "@/components/dashboard/system-health";
 import { ChampionCard } from "@/components/dashboard/champion-card";
 import { QueueStatus } from "@/components/dashboard/queue-status";
@@ -15,143 +14,80 @@ import { OpusInsightsPanel } from "@/components/dashboard/opus-insights-panel";
 import { Header } from "@/components/layout/header";
 import { ErrorBoundary } from "@/components/error-boundary";
 
-// Animacion de entrada con stagger para los children
-const containerVariants = {
-  hidden: {},
-  visible: {
-    transition: { staggerChildren: 0.07 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 16 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.35, type: "tween" as const },
-  },
-};
-
-function AnimatedSection({ children }: { children: React.ReactNode }) {
-  return (
-    <motion.div variants={itemVariants}>
-      {children}
-    </motion.div>
-  );
-}
-
 export default function DashboardPage() {
   return (
     <>
-      {/* Header solo en mobile */}
       <Header title="Dashboard" />
 
-      <motion.div
-        className="p-4 lg:p-6 space-y-6"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        {/* Desktop: titulo */}
-        <motion.div variants={itemVariants} className="hidden lg:flex items-center justify-between">
+      <div className="p-4 lg:p-6 space-y-5">
+        {/* Desktop title */}
+        <div className="hidden lg:flex items-center justify-between animate-in">
           <div>
-            <h1 className="text-lg font-semibold text-[var(--color-text-primary)]">
+            <h1 className="text-sm font-semibold text-[var(--color-text-0)] tracking-wide">
               AutoLab Dashboard
             </h1>
-            <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
+            <p className="text-[11px] text-[var(--color-text-2)] mt-0.5">
               Sistema autónomo BTC/USDT · ciclos cada 30 min
             </p>
           </div>
-        </motion.div>
+          <SystemHealth />
+        </div>
 
-        {/* ─── Fila 1: Métricas principales ──────────────────────────── */}
-        <section>
-          <motion.h2
-            variants={itemVariants}
-            className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wide mb-3"
-          >
-            Estado general
-          </motion.h2>
-          <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
-            variants={containerVariants}
-          >
-            <AnimatedSection>
-              <ErrorBoundary fallbackTitle="Error cargando estado del sistema">
-                <SystemHealth />
-              </ErrorBoundary>
-            </AnimatedSection>
-            <AnimatedSection>
-              <ErrorBoundary fallbackTitle="Error cargando campeón">
-                <ChampionCard />
-              </ErrorBoundary>
-            </AnimatedSection>
-            <AnimatedSection>
-              <ErrorBoundary fallbackTitle="Error cargando mejor OOS">
-                <BestOOSCard />
-              </ErrorBoundary>
-            </AnimatedSection>
-            <AnimatedSection>
-              <ErrorBoundary fallbackTitle="Error cargando cola">
-                <QueueStatus />
-              </ErrorBoundary>
-            </AnimatedSection>
-          </motion.div>
-        </section>
+        {/* Mobile: system health below header */}
+        <div className="lg:hidden animate-in">
+          <SystemHealth />
+        </div>
 
-        {/* ─── Fila 2: Gauge + Donut + Bars ─────────────────────────── */}
-        <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-          variants={containerVariants}
-        >
-          <AnimatedSection>
-            <ErrorBoundary fallbackTitle="Error cargando gauge">
-              <FitnessGauge />
-            </ErrorBoundary>
-          </AnimatedSection>
-          <AnimatedSection>
-            <ErrorBoundary fallbackTitle="Error cargando donut de trades">
-              <TradesDonut />
-            </ErrorBoundary>
-          </AnimatedSection>
-          <AnimatedSection>
-            <ErrorBoundary fallbackTitle="Error cargando learnings">
-              <LearningsBars />
-            </ErrorBoundary>
-          </AnimatedSection>
-        </motion.div>
+        {/* ─── Row 1: Key metrics ─────────────────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 animate-in" style={{ animationDelay: "0.05s" }}>
+          <ErrorBoundary fallbackTitle="Error cargando campeón">
+            <ChampionCard />
+          </ErrorBoundary>
+          <ErrorBoundary fallbackTitle="Error cargando mejor OOS">
+            <BestOOSCard />
+          </ErrorBoundary>
+          <ErrorBoundary fallbackTitle="Error cargando gauge">
+            <FitnessGauge />
+          </ErrorBoundary>
+          <ErrorBoundary fallbackTitle="Error cargando cola">
+            <QueueStatus />
+          </ErrorBoundary>
+        </div>
 
-        {/* ─── Autoresearch chart — full width ───────────────────────── */}
-        <AnimatedSection>
+        {/* ─── Row 2: Donut + Learning bars ───────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-in" style={{ animationDelay: "0.1s" }}>
+          <ErrorBoundary fallbackTitle="Error cargando donut">
+            <TradesDonut />
+          </ErrorBoundary>
+          <ErrorBoundary fallbackTitle="Error cargando learnings">
+            <LearningsBars />
+          </ErrorBoundary>
+        </div>
+
+        {/* ─── Autoresearch chart — full width ────────────────── */}
+        <div className="animate-in" style={{ animationDelay: "0.15s" }}>
           <ErrorBoundary fallbackTitle="Error cargando gráfico de investigación">
             <AutoresearchChart />
           </ErrorBoundary>
-        </AnimatedSection>
+        </div>
 
-        {/* ─── Top runs table — full width ───────────────────────────── */}
-        <AnimatedSection>
+        {/* ─── Top runs table — full width ────────────────────── */}
+        <div className="animate-in" style={{ animationDelay: "0.2s" }}>
           <ErrorBoundary fallbackTitle="Error cargando tabla de runs">
             <RunsTable />
           </ErrorBoundary>
-        </AnimatedSection>
+        </div>
 
-        {/* ─── Learnings + Insights ──────────────────────────────────── */}
-        <motion.div
-          className="grid grid-cols-1 lg:grid-cols-2 gap-4"
-          variants={containerVariants}
-        >
-          <AnimatedSection>
-            <ErrorBoundary fallbackTitle="Error cargando razonamiento IA">
-              <LearningsFeed />
-            </ErrorBoundary>
-          </AnimatedSection>
-          <AnimatedSection>
-            <ErrorBoundary fallbackTitle="Error cargando insights Opus">
-              <OpusInsightsPanel />
-            </ErrorBoundary>
-          </AnimatedSection>
-        </motion.div>
-      </motion.div>
+        {/* ─── Learnings + Insights ───────────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 animate-in" style={{ animationDelay: "0.25s" }}>
+          <ErrorBoundary fallbackTitle="Error cargando razonamiento IA">
+            <LearningsFeed />
+          </ErrorBoundary>
+          <ErrorBoundary fallbackTitle="Error cargando insights Opus">
+            <OpusInsightsPanel />
+          </ErrorBoundary>
+        </div>
+      </div>
     </>
   );
 }

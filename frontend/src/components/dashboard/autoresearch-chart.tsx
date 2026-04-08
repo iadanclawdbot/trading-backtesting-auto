@@ -88,10 +88,11 @@ export function AutoresearchChart() {
   const discarded = chartData.filter((d) => !d.isImprovement);
 
   return (
-    <div className="panel p-5">
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-2">
-          <span className="section-label">Progreso de la investigación autónoma</span>
+    <div className="panel p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <div className="section-label">Sharpe OOS por experimento</div>
+          <div className="text-[10px] text-[var(--color-text-2)] mt-0.5">descartados vs mejoras retenidas · running best en verde</div>
         </div>
         <div className="flex items-center gap-4 text-[10px] text-[var(--color-text-2)]">
           <div className="flex items-center gap-1.5">

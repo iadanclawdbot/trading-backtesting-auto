@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════════
-   AutoLab Dashboard — Design System
-   Trading terminal feel: dense, technical, serious
+   AutoLab Dashboard — Design System v2
+   Dense trading terminal. Every pixel earns its place.
    ═══════════════════════════════════════════════════════════════ */
 
 @theme inline {
@@ -10,32 +10,33 @@
   --font-mono: var(--font-plex-mono);
 
   /* Surfaces — layered depth */
-  --color-bg: #080a09;
-  --color-surface-0: #0d0f0e;
-  --color-surface-1: #131614;
-  --color-surface-2: #181c1a;
-  --color-surface-3: #1e2321;
+  --color-bg: #0d0f0e;
+  --color-surface-0: #111312;
+  --color-surface-1: #161917;
+  --color-surface-2: #1b1e1c;
+  --color-surface-3: #222623;
 
-  /* Borders — very subtle */
+  /* Borders */
   --color-border: rgba(255, 255, 255, 0.06);
   --color-border-hover: rgba(255, 255, 255, 0.12);
 
   /* Accent colors */
   --color-green: #4ade80;
-  --color-green-dim: #4ade8030;
+  --color-green-dim: rgba(74, 222, 128, 0.08);
   --color-amber: #fbbf24;
-  --color-amber-dim: #fbbf2430;
+  --color-amber-dim: rgba(251, 191, 36, 0.08);
   --color-red: #f87171;
-  --color-red-dim: #f8717130;
+  --color-red-dim: rgba(248, 113, 113, 0.08);
   --color-blue: #60a5fa;
-  --color-blue-dim: #60a5fa30;
+  --color-blue-dim: rgba(96, 165, 250, 0.08);
   --color-purple: #c084fc;
-  --color-purple-dim: #c084fc30;
+  --color-purple-dim: rgba(192, 132, 252, 0.08);
+  --color-pink: #f472b6;
 
   /* Text */
-  --color-text-0: #f0f2f1;
+  --color-text-0: #e5e7eb;
   --color-text-1: #9ca3af;
-  --color-text-2: #4b5563;
+  --color-text-2: #6b7280;
 
   /* Strategy colors */
   --color-vwap: #4ade80;
@@ -48,7 +49,7 @@
   --color-cat-promising: #4ade80;
   --color-cat-dead-end: #f87171;
   --color-cat-ranking: #fbbf24;
-  --color-cat-research: #c084fc;
+  --color-cat-research: #f472b6;
 }
 
 /* ─── Light override ──────────────────────────────────────── */
@@ -57,17 +58,17 @@
   --color-surface-0: #ffffff;
   --color-surface-1: #f8f9f8;
   --color-surface-2: #f0f1f0;
-  --color-surface-3: #e8e9e8;
+  --color-surface-3: #e5e7e6;
   --color-border: rgba(0, 0, 0, 0.08);
   --color-border-hover: rgba(0, 0, 0, 0.15);
   --color-text-0: #111827;
   --color-text-1: #4b5563;
   --color-text-2: #9ca3af;
-  --color-green-dim: #4ade8018;
-  --color-amber-dim: #fbbf2418;
-  --color-red-dim: #f8717118;
-  --color-blue-dim: #60a5fa18;
-  --color-purple-dim: #c084fc18;
+  --color-green-dim: rgba(74, 222, 128, 0.12);
+  --color-amber-dim: rgba(251, 191, 36, 0.12);
+  --color-red-dim: rgba(248, 113, 113, 0.12);
+  --color-blue-dim: rgba(96, 165, 250, 0.12);
+  --color-purple-dim: rgba(192, 132, 252, 0.12);
 }
 
 /* ─── Base ────────────────────────────────────────────────── */
@@ -78,74 +79,142 @@ body {
   background: var(--color-bg);
   color: var(--color-text-0);
   font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 13px;
   -webkit-font-smoothing: antialiased;
 }
 
-/* ─── Utility classes ─────────────────────────────────────── */
+/* ─── Core utility classes ────────────────────────────────── */
 
-/* Numbers — always mono, tabular */
+/* Monospace tabular numbers */
 .num {
   font-family: var(--font-mono, monospace);
   font-variant-numeric: tabular-nums;
 }
 
-/* Glow on key values */
+/* Glow for key values */
 .glow-green { text-shadow: 0 0 20px rgba(74, 222, 128, 0.3); }
 .glow-red   { text-shadow: 0 0 20px rgba(248, 113, 113, 0.3); }
 .glow-amber { text-shadow: 0 0 20px rgba(251, 191, 36, 0.3); }
 
-/* Pill badge base */
+/* ─── Pill / Tag ─────────────────────────────────────────── */
 .pill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 11px;
+  border-radius: 100px;
+  font-size: 10px;
   font-weight: 500;
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 0.02em;
   line-height: 1.5;
   border: 1px solid;
 }
 
-/* Panel — base card style */
+/* ─── Panel — card base ──────────────────────────────────── */
 .panel {
   background: var(--color-surface-1);
   border: 1px solid var(--color-border);
-  border-radius: 12px;
-  transition: border-color 0.2s;
+  border-radius: 8px;
+  transition: border-color 0.15s;
 }
 .panel:hover {
   border-color: var(--color-border-hover);
 }
 
-/* Status dot */
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
+/* ─── MCard — compact metric cell ────────────────────────── */
+.mcard {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0.625rem 0.75rem;
 }
-.dot-ok { background: var(--color-green); box-shadow: 0 0 6px rgba(74, 222, 128, 0.5); }
-.dot-err { background: var(--color-red); box-shadow: 0 0 6px rgba(248, 113, 113, 0.5); }
-.dot-warn { background: var(--color-amber); }
+.mcard .lbl {
+  font-size: 10px;
+  color: var(--color-text-2);
+  margin-bottom: 4px;
+  letter-spacing: 0.04em;
+}
+.mcard .val {
+  font-family: var(--font-mono, monospace);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-text-0);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.mcard .sub {
+  font-size: 10px;
+  color: var(--color-text-2);
+  margin-top: 3px;
+}
+.mcard .up { color: var(--color-green); }
+.mcard .dn { color: var(--color-red); }
+.mcard .warn { color: var(--color-amber); }
 
-/* Section label */
+/* ─── Section divider label ──────────────────────────────── */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-2);
+  margin-bottom: 0.5rem;
+  margin-top: 1rem;
+}
+.section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+/* Compact section label (no divider) */
 .section-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-text-2);
 }
 
-/* Scrollbar */
+/* ─── Status dot ─────────────────────────────────────────── */
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+.dot-ok { background: var(--color-green); box-shadow: 0 0 6px rgba(74, 222, 128, 0.5); }
+.dot-err { background: var(--color-red); box-shadow: 0 0 6px rgba(248, 113, 113, 0.5); }
+.dot-warn { background: var(--color-amber); }
+
+/* ─── Progress bar ───────────────────────────────────────── */
+.pbar-track {
+  height: 5px;
+  background: var(--color-border);
+  border-radius: 3px;
+  overflow: hidden;
+  flex: 1;
+}
+.pbar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.7s ease-out;
+}
+
+/* ─── Scrollbar ──────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--color-border-hover); border-radius: 2px; }
 
-/* ─── Animations ──────────────────────────────────────────── */
-@keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+/* ─── Animations ─────────────────────────────────────────── */
+@keyframes fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-.animate-in { animation: fade-in 0.4s ease-out both; }
+.animate-in { animation: fade-in 0.35s ease-out both; }
 .animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }

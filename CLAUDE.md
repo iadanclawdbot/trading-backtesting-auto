@@ -85,7 +85,12 @@ trading-backtesting-auto/
 │   ├── docs/                   ← arquitectura.md, changelog.md — leer antes de tocar infra
 │   └── skills/                 ← skill_opus_analyst.md — análisis estratégico profundo
 │
-├── frontend/                   ← Dashboard (por construir)
+├── frontend/                   ← Dashboard Next.js 16 (Vercel deploy)
+│   ├── src/app/                ← Rutas: / /learnings /insights
+│   ├── src/components/         ← layout/ + dashboard/ (18 componentes)
+│   ├── src/hooks/use-api.ts    ← SWR hooks para 9 endpoints
+│   ├── src/lib/                ← api.ts, constants.ts, formatters.ts
+│   └── src/types/api.ts        ← Interfaces TS verificadas contra API real
 │
 ├── .tmp/                       ← Archivos temporales. Regenerables, nunca commitear
 ├── .env                        ← API keys y credenciales (NUNCA en otro lugar)
@@ -190,14 +195,14 @@ Este repo fue separado del monorepo `trading-backtesting` donde vivía en `actua
 
 ## Deploy
 
-Un solo repo, dos servicios independientes en Coolify:
+Un solo repo, dos servicios:
 
-| Servicio | Base Directory | Dockerfile | Env clave |
-|----------|---------------|------------|-----------|
-| `autolab-api` | `backend/` | `deploy/Dockerfile` | `SCRIPTS_PATH=/app/backtesting` |
-| `frontend` | `frontend/` | `deploy/Dockerfile` | — |
+| Servicio | Plataforma | Base Directory | Env clave |
+|----------|-----------|---------------|-----------|
+| `autolab-api` | Coolify (Oracle ARM) | `backend/` | `SCRIPTS_PATH=/app/backtesting` |
+| `frontend` | Vercel | `frontend/` | `NEXT_PUBLIC_API_URL` |
 
-`git push origin main` → Coolify detecta cambios y redeploya el servicio correspondiente.
+`git push origin main` → Coolify redeploya el backend, Vercel redeploya el frontend.
 
 ---
 

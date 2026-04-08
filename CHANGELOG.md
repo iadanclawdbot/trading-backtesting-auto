@@ -87,9 +87,8 @@ Se construyó el dashboard frontend de AutoLab desde cero en `frontend/`. La car
 - Variables de categoría de learnings agregadas a globals.css
 - Light theme completo verificado visualmente
 
-### Pendiente al cierre
-- Deploy en Vercel (configurar Root Directory `frontend/` + env var `NEXT_PUBLIC_API_URL`)
-- Features extra: candlestick (requiere endpoint backend), market metrics (CoinGecko API)
+### Pendiente al cierre (sesión mañana)
+- Deploy en Vercel completado en sesión posterior
 
 ### Estado del sistema al cierre
 | Componente | Estado |
@@ -97,3 +96,50 @@ Se construyó el dashboard frontend de AutoLab desde cero en `frontend/`. La car
 | AutoLab API | ✅ UP (health: ok) |
 | Dashboard frontend | ✅ Build exitoso, rediseño completo, dark+light, mobile+desktop |
 | Deploy Vercel | ⏳ Pendiente push + configuración |
+
+---
+
+## 2026-04-08 — Endpoints /metrics/*, equity curve real, market context
+
+### Contexto
+Sesión continuación del build frontend. Dashboard ya deployado en Vercel y funcionando. Se corrigieron bugs visuales (gauge arc SVG, autoresearch chart sort), se agregaron 4 endpoints backend nuevos, y se expandió el dashboard con componentes de mayor profundidad.
+
+### Completado
+
+**Fixes de producción** (commit `6e4294f`):
+- Gauge SVG arc: `large-arc-flag` siempre `0` (arco nunca supera 180°)
+- Autoresearch chart: sort cronológico antes de calcular running best (API devuelve por Sharpe desc)
+
+**Backend — 4 endpoints nuevos** (commit `6df095d`):
+- `GET /metrics/equity-curve?run_id=X` — candle_states equity bar-by-bar (default: campeón)
+- `GET /metrics/champion-history` — timeline de todos los campeones coronados
+- `GET /metrics/cycles?limit=N` — ciclos autónomos desde PostgreSQL autolab_cycles
+- `GET /metrics/system` — DB size, total runs/trades/experiments/candle_states
+- Agregado `capital_final` al query de `/context` para el autoresearch chart
+
+**Frontend — Componentes nuevos** (commit `9be4989`):
+- **Equity curve real**: Recharts AreaChart con datos de `/metrics/equity-curve` (reemplaza placeholder SVG)
+- **Autoresearch chart**: Y-axis cambiado de Sharpe OOS a Capital Final ($), referencia $250
+- **Champion Timeline**: timeline visual con dots, pills de estrategia, métricas por campeón
+- **Cycles Chart**: barras por ciclo autónomo, verde = beat benchmark, stats resumen
+- **System Stats**: 4 mcards con métricas de infraestructura (experiments, runs, trades, DB size)
+- **Market Context**: BTC/USD en tiempo real (CoinGecko), Fear & Greed Index (Alternative.me), polling 5 min
+
+**Dashboard layout actualizado:**
+- Equity + Donut + Market Context en row de 3 columnas
+- Cycles Chart + Fitness Gauge + Learnings Bars en row de 3
+- Champion Card + Champion Timeline side by side
+- Queue + Best OOS + System Stats + Opus Insights en row de 4
+
+### Pendiente al cierre
+- [ ] Redeploy backend en Coolify para activar /metrics/* endpoints
+- [ ] Animaciones con Motion (entrada staggered, números animados)
+- [ ] Candlestick chart con lightweight-charts (requiere datos OHLCV)
+
+### Estado del sistema al cierre
+| Componente | Estado |
+|------------|--------|
+| AutoLab API | ✅ UP — pendiente redeploy para /metrics/* |
+| Dashboard frontend (Vercel) | ✅ 18 componentes, 9 endpoints, 3 páginas, dark+light |
+| GitHub repo | ✅ main al día — commit `9be4989` |
+| Champion | `vwap_pullback` — $338.30 (+35.3%) — Sharpe 1.593 — 19 trades |

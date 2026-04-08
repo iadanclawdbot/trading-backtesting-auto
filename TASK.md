@@ -19,6 +19,8 @@
 | Supabase CHECK constraint            | ✅ Migración aplicada                         | 2026-04-08 |
 | GitHub repo creado                   | ✅ `iadanclawdbot/trading-backtesting-auto`   | 2026-04-07 |
 | Coolify apuntando a este repo        | ✅ Deployado — commit 948aca2                 | 2026-04-08 |
+| Frontend dashboard (Vercel)          | ✅ 18 componentes, 9 endpoints, 3 páginas     | 2026-04-08 |
+| Backend /metrics/* endpoints         | ✅ 4 endpoints nuevos — pendiente redeploy    | 2026-04-08 |
 | Fixes estancamiento (3 RCAs)         | ✅ En producción desde deploy 2026-04-08      | 2026-04-08 |
 | Ciclo autónomo mejorando resultados  | 🔄 En observación — fixes activos             | 2026-04-08 |
 
@@ -88,19 +90,30 @@ Hacer en orden. Bloquean todo lo demás.
 
 - [x] **Definir stack** — Next.js 16.2.2 + Tailwind 4.1 + Recharts + SWR ✅ 2026-04-08
 - [x] **Páginas implementadas** ✅ 2026-04-08
-  - `/` → Dashboard completo: campeón, best OOS, fitness gauge, cola, donut, learnings bars, autoresearch chart, runs table, learnings feed, opus insights
+  - `/` → Dashboard completo con 18 componentes
   - `/learnings` → Learnings por categoría + feed completo con filtros
   - `/insights` → Panel de insights estratégicos Opus
-- [x] **Conexión a API** — 5 endpoints conectados con SWR polling (30-60s) ✅ 2026-04-08
+- [x] **Conexión a API** — 9 endpoints conectados con SWR polling (30-60s) ✅ 2026-04-08
   - `GET /health` → status dots (API, SQLite, PG)
   - `GET /status` → campeón + best OOS + cola + benchmark
-  - `GET /context?top_n=N` → autoresearch chart + runs table
+  - `GET /context?top_n=N` → autoresearch chart (capital Y-axis) + runs table
   - `GET /learnings` → feed + barras por categoría
   - `GET /opus-insights` → panel de insights
+  - `GET /metrics/equity-curve` → equity curve real del campeón (bar-by-bar)
+  - `GET /metrics/champion-history` → timeline de evolución del campeón
+  - `GET /metrics/cycles` → bar chart de ciclos autónomos
+  - `GET /metrics/system` → métricas de infraestructura (DB size, runs, trades)
 - [x] **Design system profesional** — dark/light toggle, IBM Plex fonts, layered surfaces, glow effects, pill badges ✅ 2026-04-08
 - [x] **Responsive mobile-first** — sidebar desktop + bottom tabs mobile ✅ 2026-04-08
 - [x] **Tooltips (?)** — 16 métricas explicadas en lenguaje simple ✅ 2026-04-08
-- [ ] **Deploy en Vercel** — Root Directory: `frontend/`, pendiente push y config
+- [x] **Deploy en Vercel** — Root Directory: `frontend/`, auto-deploy en push ✅ 2026-04-08
+- [x] **Market context** — BTC price, 24h change, market cap, volumen, Fear & Greed Index ✅ 2026-04-08
+- [x] **Backend /metrics/* endpoints** — equity-curve, champion-history, cycles, system ✅ 2026-04-08
+
+**Pendiente frontend:**
+- [ ] Redeploy backend en Coolify para activar /metrics/* endpoints
+- [ ] Animaciones con Motion (entrada staggered, números animados)
+- [ ] Candlestick chart con lightweight-charts (requiere datos OHLCV)
 
 ---
 

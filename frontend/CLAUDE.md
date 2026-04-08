@@ -42,21 +42,45 @@ URL: `https://autolab-api.dantelujan.online` (en `NEXT_PUBLIC_API_URL`)
 
 ```
 src/
-  app/           # Rutas: / /learnings /insights
+  app/                    # Rutas: / /learnings /insights
   components/
-    layout/      # Sidebar, MobileNav, Header, ThemeProvider, ThemeToggle
-    dashboard/   # Todos los componentes del dashboard
-  hooks/         # use-api.ts — SWR hooks
-  lib/           # api.ts, constants.ts, formatters.ts, utils.ts
-  types/         # api.ts — interfaces TypeScript
+    layout/               # Sidebar, MobileNav, Header, ThemeProvider, ThemeToggle
+    dashboard/            # 18 componentes del dashboard:
+      autoresearch-chart  # Scatter+step capital por experimento (Recharts)
+      best-oos-card       # Mejor resultado OOS
+      champion-card       # Campeón actual con métricas
+      champion-timeline   # Timeline visual de evolución del campeón
+      cycles-chart        # Barras de ciclos autónomos (beat benchmark)
+      equity-curve        # Equity curve real del campeón (AreaChart)
+      fitness-gauge       # SVG gauge Sharpe vs benchmark
+      learnings-bars      # Barras por categoría de learning
+      learnings-feed      # Feed colapsable de learnings
+      market-context      # BTC price + Fear & Greed (APIs externas)
+      metric-card         # Card genérica reutilizable
+      opus-insights-panel # Panel de insights estratégicos
+      queue-status        # Jobs done/failed
+      runs-table          # Top runs sortable con params expandibles
+      system-health       # Dots: API, SQLite, PG
+      system-stats        # Métricas infra (DB size, runs, trades)
+      tooltip-help        # Icono (?) con tooltip explicativo
+      trades-donut        # Win/Loss pie chart
+  hooks/                  # use-api.ts — 9 SWR hooks
+  lib/                    # api.ts, constants.ts, formatters.ts, utils.ts
+  types/                  # api.ts — interfaces TS para todos los endpoints
 ```
+
+## APIs externas
+
+- **CoinGecko** (free, sin key): BTC price, 24h change, market cap, volumen — polling 5 min
+- **Alternative.me**: Fear & Greed Index — polling 5 min
 
 ## Convenciones
 
 - Texto de UI en **español**; nombres de variables/funciones en **inglés**
 - Fuente monoespaciada (`font-mono`) para todos los números y métricas
-- Colores semánticos via CSS variables (`var(--color-success)`, etc.)
+- Colores semánticos via CSS variables (`var(--color-green)`, `var(--color-red)`, etc.)
 - Cada componente de dashboard tiene su propio hook SWR (polling 30-60s)
 - `keepPreviousData: true` en todos los hooks — sin pantallas en blanco
 - Componentes del dashboard son todos Client Components (`"use client"`)
 - Páginas en `app/` pueden ser Server Components (no usan hooks directamente)
+- Error boundaries por sección — un componente falla, el resto sigue funcionando

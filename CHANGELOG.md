@@ -39,20 +39,27 @@ Se identificaron 3 causas raíz con evidencia numérica:
 - Archivos de memoria creados en `/Users/mac/.claude/projects/.../memory/`
 - `project_context.md`, `project_stall_diagnosis.md`, `user_profile.md`
 
+**Deploy en Coolify** (2026-04-08):
+- Configuración manual: Repository → `iadanclawdbot/trading-backtesting-auto`, Base Directory → `backend/`, Dockerfile → `deploy/Dockerfile`
+- Persistent Storage: `/app/data` montado en el container
+- Redeploy exitoso — commit `948aca2` en producción
+- Verificado: `/health` → `sqlite:true, postgresql:true` ✅
+- Verificado: `/status` → `best_oos = vwap_pullback WR=66.67%` (sin contaminación WR=100%) ✅
+
 ### Pendiente al cierre
-- [ ] Actualizar Coolify: Repository → `iadanclawdbot/trading-backtesting-auto`, Base Directory → `backend/`, Dockerfile → `deploy/Dockerfile`, `SCRIPTS_PATH=/app/backtesting` → Redeploy
 - [ ] Migración SQL en Supabase: CHECK constraint `outcome='testing'` en `external_research`
 - [ ] Verificar cron Daily Research en n8n (`0 9 * * *`, no `*/3 * * * *`)
-- [ ] 24h post-deploy: verificar que learnings muestren `mean_reversion` y params limpios
+- [ ] Verificar cron Docker en servidor — UUID del container puede haber cambiado con nuevo deploy
+- [ ] 24h post-deploy: verificar que learnings muestren `mean_reversion` y params limpios (sin ghost params)
 
 ### Estado del sistema al cierre
 | Componente | Estado |
 |---|---|
-| `autolab-api /health` | ✅ UP |
+| `autolab-api /health` | ✅ UP — sqlite y postgresql conectados |
 | GitHub repo | ✅ Pusheado, rama `main` al día |
-| Coolify | ❌ Apuntando al repo viejo (acción manual pendiente) |
+| Coolify | ✅ Apuntando a `iadanclawdbot/trading-backtesting-auto` — commit `948aca2` |
 | Champion | `vwap_pullback` — $338.30 (+35.3%) — Sharpe 1.593 — 19 trades |
-| Ciclo autónomo | Corriendo — fixes deployarán en próximo redeploy |
+| Ciclo autónomo | ✅ Fixes en producción — en observación 24h |
 
 ---
 

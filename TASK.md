@@ -12,17 +12,18 @@
 
 | Componente                           | Estado                                        | Verificado |
 | ------------------------------------ | --------------------------------------------- | ---------- |
-| autolab-api (`/health`)              | ✅ UP — sqlite y postgresql conectados        | 2026-04-07 |
+| autolab-api (`/health`)              | ✅ UP — sqlite y postgresql conectados        | 2026-04-08 |
 | n8n Main Loop (30min)                | ⚪ No verificado                              | —          |
 | n8n Daily Research (9am)             | ⚪ Cron puede estar en `*/3`                  | —          |
 | n8n Chat Telegram                    | ⚪ No verificado                              | —          |
 | Supabase CHECK constraint            | ❌ Migración SQL pendiente                    | 2026-04-07 |
 | GitHub repo creado                   | ✅ `iadanclawdbot/trading-backtesting-auto`   | 2026-04-07 |
-| Coolify apuntando a este repo        | ❌ Pendiente — acción manual requerida        | 2026-04-07 |
-| Ciclo autónomo mejorando resultados  | ❌ Estancado ~1 semana                        | 2026-03-25 |
+| Coolify apuntando a este repo        | ✅ Deployado — commit 948aca2                 | 2026-04-08 |
+| Fixes estancamiento (3 RCAs)         | ✅ En producción desde deploy 2026-04-08      | 2026-04-08 |
+| Ciclo autónomo mejorando resultados  | 🔄 En observación — fixes activos             | 2026-04-08 |
 
-**Campeón actual** (al 2026-03-25):
-`ema_crossover` | Capital: $308.91 (+23.6%) | Sharpe OOS: 1.432 | Trades: 15 ⚠️ (menos de 30, frágil)
+**Campeón actual** (al 2026-04-08):
+`vwap_pullback` | Capital: $338.30 (+35.3%) | Sharpe OOS: 1.593 | Trades: 19
 
 ---
 

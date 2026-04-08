@@ -8,6 +8,10 @@ import type {
   ContextResponse,
   LearningsResponse,
   OpusInsightsResponse,
+  EquityCurveResponse,
+  ChampionHistoryResponse,
+  CyclesResponse,
+  SystemMetricsResponse,
 } from "@/types/api";
 
 // Config base de polling — datos cambian cada 30 min en el backend
@@ -52,6 +56,39 @@ export function useLearnings() {
 // Opus insights: cada 60s
 export function useOpusInsights() {
   return useSWR<OpusInsightsResponse>("/opus-insights", fetcher, {
+    ...SWR_BASE,
+    refreshInterval: 60_000,
+  });
+}
+
+// Equity curve del campeón (o de un run específico): cada 60s
+export function useEquityCurve(runId?: string) {
+  const key = runId ? `/metrics/equity-curve?run_id=${runId}` : "/metrics/equity-curve";
+  return useSWR<EquityCurveResponse>(key, fetcher, {
+    ...SWR_BASE,
+    refreshInterval: 60_000,
+  });
+}
+
+// Historial de campeones: cada 60s
+export function useChampionHistory() {
+  return useSWR<ChampionHistoryResponse>("/metrics/champion-history", fetcher, {
+    ...SWR_BASE,
+    refreshInterval: 60_000,
+  });
+}
+
+// Ciclos autónomos: cada 60s
+export function useCycles(limit: number = 100) {
+  return useSWR<CyclesResponse>(`/metrics/cycles?limit=${limit}`, fetcher, {
+    ...SWR_BASE,
+    refreshInterval: 60_000,
+  });
+}
+
+// Métricas del sistema: cada 60s
+export function useSystemMetrics() {
+  return useSWR<SystemMetricsResponse>("/metrics/system", fetcher, {
     ...SWR_BASE,
     refreshInterval: 60_000,
   });

@@ -22,11 +22,13 @@ URL: `https://autolab-api.dantelujan.online` (en `NEXT_PUBLIC_API_URL`)
 **Endpoints disponibles:**
 - `GET /health` → `{ status, sqlite, postgresql, timestamp }`
 - `GET /status` → `{ champion | null, queue: { done, failed }, best_oos, benchmark? }`
-- `GET /context?top_n=N` → `{ top_results[], last_cycle_results[], learnings[], opus_insights[] }`
+- `GET /context?top_n=N` → `{ top_results[] (incluye capital_final), last_cycle_results[], learnings[], opus_insights[] }`
 - `GET /learnings` → `{ learnings: [], count }` (NO es array plano)
 - `GET /opus-insights` → `{ insights: [], count }` (actualmente vacío)
-
-**NO usar** (no existen): `/metrics/*`
+- `GET /metrics/equity-curve?run_id=X` → `{ run_id, strategy, points: [{bar, ts, equity, in_pos}] }` (sin run_id usa campeón)
+- `GET /metrics/champion-history` → `{ champions: [{promoted_at, strategy, capital_final, ...}], count }`
+- `GET /metrics/cycles?limit=N` → `{ cycles: [{finished_at, jobs_completed, best_sharpe_oos, beat_benchmark}], count }`
+- `GET /metrics/system` → `{ db_size_mb, total_runs, total_trades, total_experiments, strategies_tested }`
 
 ## Deploy
 

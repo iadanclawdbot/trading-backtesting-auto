@@ -224,6 +224,7 @@ def get_context(
             SELECT r.strategy, r.params_json, r.sharpe_ratio AS sharpe_oos,
                    r.total_trades AS trades_oos, r.win_rate AS wr_oos,
                    r.max_drawdown AS dd_oos, r.created_at,
+                   r.capital_final,
                    t.sharpe_ratio AS sharpe_train
             FROM runs r
             LEFT JOIN runs t ON (
@@ -1700,6 +1701,146 @@ def delete_contaminated_runs():
         pg.commit()
         pg.close()
         return {"marked_superseded": marked}
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+# ==============================================================================
+# METRICS — Endpoints para el dashboard frontend
+# ==============================================================================
+
+@app.get("/metrics/equity-curve")
+def metrics_equity_curve(run_id: Optional[str] = Query(None, description="run_id del run. Si no se pasa, usa el campeón actual.")):
+    """Curva de equity (candle_states) de un run específico o del campeón."""
+    try:
+        # Si no se pasa run_id, usar el del campeón actual
+        if not run_id:
+            champ = _get_champion()
+            if not champ:
+                return {"run_id": None, "strategy": None, "points": [], "message": "Sin campeón activo"}
+            run_id = champ["run_id"]
+
+        conn = get_sqlite()
+        cur = conn.cursor()
+
+        # Metadata del run
+        cur.execute(
+            "SELECT strategy, capital_final, sharpe_ratio, total_trades, win_rate FROM runs WHERE run_id = ?",
+            (run_id,)
+        )
+        run_row = cur.fetchone()
+        if not run_row:
+            conn.close()
+            raise HTTPException(404, f"run_id {run_id} no encontrado")
+
+        # Candle states — equity curve
+        cur.execute(
+            "SELECT bar_index, timestamp, equity, in_position FROM candle_states WHERE run_id = ? ORDER BY bar_index",
+            (run_id,)
+        )
+        rows = cur.fetchall()
+        conn.close()
+
+        return {
+            "run_id": run_id,
+            "strategy": run_row["strategy"],
+            "capital_final": run_row["capital_final"],
+            "sharpe_ratio": run_row["sharpe_ratio"],
+            "total_trades": run_row["total_trades"],
+            "win_rate": run_row["win_rate"],
+            "points": [
+                {"bar": r["bar_index"], "ts": r["timestamp"], "equity": r["equity"], "in_pos": r["in_position"]}
+                for r in rows
+            ],
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@app.get("/metrics/champion-history")
+def metrics_champion_history():
+    """Historial de campeones coronados — timeline de mejoras."""
+    try:
+        _ensure_session_state_table()
+        conn = get_sqlite()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT id, promoted_at, run_id, strategy, capital_final, pnl_pct,
+                   sharpe_ratio, total_trades, win_rate, max_drawdown
+            FROM champions
+            ORDER BY promoted_at ASC
+        """)
+        rows = cur.fetchall()
+        conn.close()
+        return {
+            "champions": [dict(r) for r in rows],
+            "count": len(rows),
+        }
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@app.get("/metrics/cycles")
+def metrics_cycles(limit: int = Query(100, description="Últimos N ciclos")):
+    """Historial de ciclos autónomos desde PostgreSQL."""
+    try:
+        pg = get_postgres()
+        cur = pg.cursor()
+        cur.execute("""
+            SELECT id, cycle_num, session_id, phase, finished_at,
+                   jobs_completed, best_sharpe_oos, beat_benchmark, notes
+            FROM autolab_cycles
+            WHERE phase = 'complete'
+            ORDER BY finished_at DESC
+            LIMIT %s
+        """, (limit,))
+        rows = cur.fetchall()
+        pg.close()
+        return {
+            "cycles": rows,  # RealDictCursor returns list of dicts
+            "count": len(rows),
+        }
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@app.get("/metrics/system")
+def metrics_system():
+    """Estadísticas generales del sistema — tamaños de DB, conteos."""
+    try:
+        conn = get_sqlite()
+        cur = conn.cursor()
+
+        cur.execute("SELECT COUNT(*) as cnt FROM runs")
+        total_runs = cur.fetchone()["cnt"]
+
+        cur.execute("SELECT COUNT(*) as cnt FROM trades")
+        total_trades = cur.fetchone()["cnt"]
+
+        cur.execute("SELECT COUNT(DISTINCT strategy) as cnt FROM runs")
+        strategies = cur.fetchone()["cnt"]
+
+        cur.execute("SELECT COUNT(*) as cnt FROM candle_states")
+        total_candle_states = cur.fetchone()["cnt"]
+
+        cur.execute("SELECT COUNT(*) as cnt FROM experiments")
+        total_experiments = cur.fetchone()["cnt"]
+
+        conn.close()
+
+        # DB file size
+        db_size_bytes = os.path.getsize(SQLITE_DB_PATH) if os.path.exists(SQLITE_DB_PATH) else 0
+
+        return {
+            "db_size_mb": round(db_size_bytes / (1024 * 1024), 2),
+            "total_runs": total_runs,
+            "total_trades": total_trades,
+            "total_experiments": total_experiments,
+            "total_candle_states": total_candle_states,
+            "strategies_tested": strategies,
+        }
     except Exception as e:
         raise HTTPException(500, str(e))
 

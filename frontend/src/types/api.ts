@@ -56,6 +56,7 @@ export interface TopResult {
   wr_oos: number;
   dd_oos: number;
   created_at: string;
+  capital_final: number;
   sharpe_train: number;
 }
 
@@ -106,4 +107,70 @@ export interface OpusInsight {
 export interface OpusInsightsResponse {
   insights: OpusInsight[];
   count: number;
+}
+
+// GET /metrics/equity-curve?run_id=X
+export interface EquityCurvePoint {
+  bar: number;
+  ts: number;
+  equity: number;
+  in_pos: number;
+}
+
+export interface EquityCurveResponse {
+  run_id: string | null;
+  strategy: string | null;
+  capital_final?: number;
+  sharpe_ratio?: number;
+  total_trades?: number;
+  win_rate?: number;
+  points: EquityCurvePoint[];
+  message?: string;
+}
+
+// GET /metrics/champion-history
+export interface ChampionHistoryEntry {
+  id: number;
+  promoted_at: string;
+  run_id: string;
+  strategy: string;
+  capital_final: number;
+  pnl_pct: number | null;
+  sharpe_ratio: number | null;
+  total_trades: number | null;
+  win_rate: number | null;
+  max_drawdown: number | null;
+}
+
+export interface ChampionHistoryResponse {
+  champions: ChampionHistoryEntry[];
+  count: number;
+}
+
+// GET /metrics/cycles?limit=N
+export interface CycleEntry {
+  id: number;
+  cycle_num: number;
+  session_id: string;
+  phase: string;
+  finished_at: string;
+  jobs_completed: number;
+  best_sharpe_oos: number | null;
+  beat_benchmark: boolean;
+  notes: string | null;
+}
+
+export interface CyclesResponse {
+  cycles: CycleEntry[];
+  count: number;
+}
+
+// GET /metrics/system
+export interface SystemMetricsResponse {
+  db_size_mb: number;
+  total_runs: number;
+  total_trades: number;
+  total_experiments: number;
+  total_candle_states: number;
+  strategies_tested: number;
 }

@@ -12,12 +12,12 @@ import {
   Area,
 } from "recharts";
 import { useApiContext } from "@/hooks/use-api";
-import { MetricCard } from "./metric-card";
-import { getStrategy, BENCHMARK_FITNESS } from "@/lib/constants";
-import { formatSharpe, formatPercent } from "@/lib/formatters";
+import { getStrategy } from "@/lib/constants";
+import { formatCurrency, formatSharpe, formatPercent } from "@/lib/formatters";
 
 interface ChartPoint {
   index: number;
+  capital: number;
   sharpe: number;
   wr: number;
   dd: number;
@@ -26,14 +26,17 @@ interface ChartPoint {
   runningBest: number;
 }
 
-function buildData(results: Array<{ strategy: string; sharpe_oos: number; wr_oos: number; dd_oos: number; created_at: string }>): ChartPoint[] {
+const INITIAL_CAPITAL = 250;
+
+function buildData(results: Array<{ strategy: string; capital_final: number; sharpe_oos: number; wr_oos: number; dd_oos: number; created_at: string }>): ChartPoint[] {
   // Sort chronologically — API returns sorted by Sharpe desc, but chart needs time order
   const sorted = [...results].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   let best = -Infinity;
   return sorted.map((r, i) => {
-    const isImprovement = r.sharpe_oos > best;
-    if (isImprovement) best = r.sharpe_oos;
-    return { index: i + 1, sharpe: r.sharpe_oos, wr: r.wr_oos, dd: r.dd_oos, strategy: r.strategy, isImprovement, runningBest: best };
+    const capital = r.capital_final ?? INITIAL_CAPITAL;
+    const isImprovement = capital > best;
+    if (isImprovement) best = capital;
+    return { index: i + 1, capital, sharpe: r.sharpe_oos, wr: r.wr_oos, dd: r.dd_oos, strategy: r.strategy, isImprovement, runningBest: best };
   });
 }
 
@@ -49,8 +52,12 @@ function ChartTooltip({ active, payload }: { active?: boolean; payload?: Array<{
       </div>
       <div className="space-y-1 text-[var(--color-text-1)]">
         <div className="flex justify-between">
+          <span>Capital final</span>
+          <span className="num font-medium text-[var(--color-text-0)]">{formatCurrency(d.capital)}</span>
+        </div>
+        <div className="flex justify-between">
           <span>Sharpe OOS</span>
-          <span className="num font-medium text-[var(--color-text-0)]">{formatSharpe(d.sharpe)}</span>
+          <span className="num">{formatSharpe(d.sharpe)}</span>
         </div>
         <div className="flex justify-between">
           <span>Win Rate</span>
@@ -93,8 +100,8 @@ export function AutoresearchChart() {
     <div className="panel p-4">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <div className="section-label">Sharpe OOS por experimento</div>
-          <div className="text-[10px] text-[var(--color-text-2)] mt-0.5">descartados vs mejoras retenidas · running best en verde</div>
+          <div className="section-label">Capital final por experimento</div>
+          <div className="text-[10px] text-[var(--color-text-2)] mt-0.5">descartados vs mejoras retenidas · running best en verde · desde $250</div>
         </div>
         <div className="flex items-center gap-4 text-[10px] text-[var(--color-text-2)]">
           <div className="flex items-center gap-1.5">
@@ -107,7 +114,7 @@ export function AutoresearchChart() {
           </div>
           <div className="flex items-center gap-1.5">
             <span className="block h-[2px] w-3 bg-[var(--color-amber)] opacity-70" />
-            Benchmark
+            Capital inicial
           </div>
         </div>
       </div>
@@ -127,7 +134,7 @@ export function AutoresearchChart() {
             </defs>
 
             <ReferenceLine
-              y={BENCHMARK_FITNESS}
+              y={INITIAL_CAPITAL}
               stroke="var(--color-amber)"
               strokeDasharray="4 3"
               strokeWidth={1}
@@ -147,8 +154,8 @@ export function AutoresearchChart() {
               tick={{ fill: "var(--color-text-2)", fontSize: 10 }}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(v: number) => v.toFixed(1)}
-              width={35}
+              tickFormatter={(v: number) => `$${v}`}
+              width={50}
             />
 
             <Tooltip content={<ChartTooltip />} cursor={false} />
@@ -164,10 +171,10 @@ export function AutoresearchChart() {
             />
 
             {/* Descartados */}
-            <Scatter data={discarded} dataKey="sharpe" yAxisId="left" fill="var(--color-surface-3)" fillOpacity={0.8} r={2.5} />
+            <Scatter data={discarded} dataKey="capital" yAxisId="left" fill="var(--color-surface-3)" fillOpacity={0.8} r={2.5} />
 
             {/* Mejoras */}
-            <Scatter data={improvements} dataKey="sharpe" yAxisId="left" fill="var(--color-green)" r={4} />
+            <Scatter data={improvements} dataKey="capital" yAxisId="left" fill="var(--color-green)" r={4} />
 
             {/* Running best line */}
             <Line

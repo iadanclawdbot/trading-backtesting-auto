@@ -13,6 +13,10 @@ import { LearningsBars } from "@/components/dashboard/learnings-bars";
 import { RunsTable } from "@/components/dashboard/runs-table";
 import { LearningsFeed } from "@/components/dashboard/learnings-feed";
 import { OpusInsightsPanel } from "@/components/dashboard/opus-insights-panel";
+import { ChampionTimeline } from "@/components/dashboard/champion-timeline";
+import { CyclesChart } from "@/components/dashboard/cycles-chart";
+import { SystemStats } from "@/components/dashboard/system-stats";
+import { MarketContext } from "@/components/dashboard/market-context";
 import { Header } from "@/components/layout/header";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { BENCHMARK_FITNESS } from "@/lib/constants";
@@ -184,13 +188,16 @@ export default function DashboardPage() {
           </ErrorBoundary>
         </div>
 
-        {/* ─── Equity + Donut ──────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-2 animate-in" style={{ animationDelay: "0.05s" }}>
+        {/* ─── Equity + Donut + Market ─────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr_1fr] gap-2 animate-in" style={{ animationDelay: "0.05s" }}>
           <ErrorBoundary fallbackTitle="Error cargando equity curve">
             <EquityCurve />
           </ErrorBoundary>
           <ErrorBoundary fallbackTitle="Error cargando donut">
             <TradesDonut />
+          </ErrorBoundary>
+          <ErrorBoundary fallbackTitle="Error cargando mercado">
+            <MarketContext />
           </ErrorBoundary>
         </div>
 
@@ -205,14 +212,24 @@ export default function DashboardPage() {
         {/* ─── Ciclos + Champions/Gauge + Learnings ────────── */}
         <div className="section-divider">Ciclos y aprendizaje</div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 animate-in" style={{ animationDelay: "0.15s" }}>
+          <ErrorBoundary fallbackTitle="Error cargando ciclos">
+            <CyclesChart />
+          </ErrorBoundary>
           <ErrorBoundary fallbackTitle="Error cargando gauge">
             <FitnessGauge />
           </ErrorBoundary>
+          <ErrorBoundary fallbackTitle="Error cargando learnings">
+            <LearningsBars />
+          </ErrorBoundary>
+        </div>
+
+        {/* ─── Champion history + details ──────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-2 animate-in" style={{ animationDelay: "0.17s" }}>
           <ErrorBoundary fallbackTitle="Error cargando campeón">
             <ChampionCard />
           </ErrorBoundary>
-          <ErrorBoundary fallbackTitle="Error cargando learnings">
-            <LearningsBars />
+          <ErrorBoundary fallbackTitle="Error cargando historial">
+            <ChampionTimeline />
           </ErrorBoundary>
         </div>
 
@@ -233,10 +250,11 @@ export default function DashboardPage() {
           <ErrorBoundary fallbackTitle="Error cargando best OOS">
             <BestOOSCard />
           </ErrorBoundary>
+          <ErrorBoundary fallbackTitle="Error cargando infraestructura">
+            <SystemStats />
+          </ErrorBoundary>
           <ErrorBoundary fallbackTitle="Error cargando razonamiento IA">
-            <div className="lg:col-span-2">
-              <OpusInsightsPanel />
-            </div>
+            <OpusInsightsPanel />
           </ErrorBoundary>
         </div>
 

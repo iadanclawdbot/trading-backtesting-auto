@@ -101,10 +101,13 @@ export function LearningsFeed() {
 
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]">
-      {/* Header colapsable */}
-      <button
-        className="flex w-full items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors rounded-t-xl"
+      {/* Header colapsable — div en vez de button para evitar button-dentro-button con TooltipHelp */}
+      <div
+        role="button"
+        tabIndex={0}
+        className="flex w-full items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors rounded-t-xl cursor-pointer"
         onClick={() => setIsOpen((o) => !o)}
+        onKeyDown={(e) => e.key === "Enter" && setIsOpen((o) => !o)}
       >
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">
@@ -120,7 +123,7 @@ export function LearningsFeed() {
         ) : (
           <ChevronDown className="h-4 w-4 text-[var(--color-text-muted)]" />
         )}
-      </button>
+      </div>
 
       {isOpen && (
         <div className="px-4 pb-4">

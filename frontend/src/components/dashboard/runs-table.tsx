@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { ChevronDown, ChevronUp, ChevronRight } from "lucide-react";
-import { useContext } from "@/hooks/use-api";
+import { useApiContext } from "@/hooks/use-api";
 import { MetricCard } from "./metric-card";
 import { TooltipHelp } from "./tooltip-help";
 import { getStrategy, BENCHMARK_FITNESS } from "@/lib/constants";
@@ -78,7 +78,7 @@ function ExpandedRow({ result }: { result: TopResult }) {
 }
 
 export function RunsTable() {
-  const { data, isLoading } = useContext(20);
+  const { data, isLoading } = useApiContext(20);
   const [sortKey, setSortKey] = useState<SortKey>("sharpe_oos");
   const [sortDir, setSortDir] = useState<"desc" | "asc">("desc");
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
@@ -161,9 +161,8 @@ export function RunsTable() {
                 const isExpanded = expandedIdx === idx;
 
                 return (
-                  <>
+                  <Fragment key={idx}>
                     <tr
-                      key={idx}
                       className={cn(
                         "border-b border-[var(--color-border)] cursor-pointer transition-colors",
                         "hover:bg-white/5",
@@ -206,13 +205,13 @@ export function RunsTable() {
                       </td>
                     </tr>
                     {isExpanded && (
-                      <tr key={`${idx}-expanded`} className="bg-[var(--color-surface-elevated)]">
+                      <tr className="bg-[var(--color-surface-elevated)]">
                         <td colSpan={COLUMNS.length + 2}>
                           <ExpandedRow result={result} />
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
             </tbody>

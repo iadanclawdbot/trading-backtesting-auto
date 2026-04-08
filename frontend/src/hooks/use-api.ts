@@ -34,7 +34,7 @@ export function useStatus() {
 }
 
 // Context: cada 60s — top_results, learnings resumidos, opus_insights
-export function useContext(topN: number = 20) {
+export function useApiContext(topN: number = 20) {
   return useSWR<ContextResponse>(`/context?top_n=${topN}`, fetcher, {
     ...SWR_BASE,
     refreshInterval: 60_000,

@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts";
-import { useContext } from "@/hooks/use-api";
+import { useApiContext } from "@/hooks/use-api";
 import { MetricCard } from "./metric-card";
 import { TooltipHelp } from "./tooltip-help";
 import { getStrategy, BENCHMARK_FITNESS } from "@/lib/constants";
@@ -77,7 +77,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<
 }
 
 export function AutoresearchChart() {
-  const { data, isLoading } = useContext(50);
+  const { data, isLoading } = useApiContext(50);
 
   if (isLoading && !data) {
     return (

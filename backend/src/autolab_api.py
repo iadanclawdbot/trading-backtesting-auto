@@ -661,53 +661,69 @@ def _get_champion(symbol: str = "BTCUSDT") -> dict | None:
 
 def _maybe_crown_champion(batch_id: str | None) -> dict | None:
     """
-    Compara el mejor run del ciclo actual contra el campeón vigente.
+    Compara el mejor run del ciclo actual contra el campeón vigente PER SYMBOL.
+    Cada moneda tiene su propio campeón independiente.
     Si lo supera, lo inserta en tabla champions y retorna el nuevo campeón.
     """
     try:
         _ensure_session_state_table()
         conn = get_sqlite()
-        # Mejor run del ciclo por capital_final
+
+        # Obtener los mejores runs del batch, agrupados por symbol
         query = """
             SELECT run_id, strategy, params_json, capital_final, pnl_pct,
-                   sharpe_ratio, total_trades, win_rate, max_drawdown
+                   sharpe_ratio, total_trades, win_rate, max_drawdown, symbol
             FROM runs
             WHERE dataset = 'valid' AND total_trades >= 15
         """
-        params: tuple = ()
+        params_q: tuple = ()
         if batch_id:
             query += " AND batch_id = ?"
-            params = (batch_id,)
-        query += " ORDER BY capital_final DESC LIMIT 1"
-        best = conn.execute(query, params).fetchone()
-        if not best:
+            params_q = (batch_id,)
+        query += " ORDER BY capital_final DESC"
+        batch_runs = conn.execute(query, params_q).fetchall()
+        if not batch_runs:
             conn.close()
             return None
 
-        # Campeón actual
-        current_champ = conn.execute(
-            "SELECT capital_final FROM champions ORDER BY capital_final DESC LIMIT 1"
-        ).fetchone()
-        champ_cap = current_champ[0] if current_champ else 0.0
+        # Evaluar campeón per-symbol
+        new_champion = None
+        seen_symbols: set = set()
+        for run in batch_runs:
+            run_symbol = run["symbol"] or "BTCUSDT"
+            if run_symbol in seen_symbols:
+                continue  # ya procesamos el mejor de este symbol
+            seen_symbols.add(run_symbol)
 
-        if best["capital_final"] > champ_cap:
-            conn.execute("""
-                INSERT INTO champions
-                  (run_id, strategy, params_json, capital_final, pnl_pct,
-                   sharpe_ratio, total_trades, win_rate, max_drawdown, notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                best["run_id"], best["strategy"], best["params_json"],
-                best["capital_final"], best["pnl_pct"], best["sharpe_ratio"],
-                best["total_trades"], best["win_rate"], best["max_drawdown"],
-                f"Nuevo campeón — superó ${champ_cap:.2f}",
-            ))
-            conn.commit()
-            print(f"[champion] NUEVO CAMPEON: {best['strategy']} ${best['capital_final']:.2f} (anterior ${champ_cap:.2f})")
-            conn.close()
-            return dict(best)
+            # Campeón actual para este symbol
+            current_champ = conn.execute("""
+                SELECT c.capital_final FROM champions c
+                JOIN runs r ON c.run_id = r.run_id
+                WHERE r.symbol = ?
+                ORDER BY c.capital_final DESC LIMIT 1
+            """, (run_symbol,)).fetchone()
+            champ_cap = current_champ[0] if current_champ else 0.0
+
+            if run["capital_final"] > champ_cap:
+                conn.execute("""
+                    INSERT INTO champions
+                      (run_id, strategy, params_json, capital_final, pnl_pct,
+                       sharpe_ratio, total_trades, win_rate, max_drawdown, notes)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    run["run_id"], run["strategy"], run["params_json"],
+                    run["capital_final"], run["pnl_pct"], run["sharpe_ratio"],
+                    run["total_trades"], run["win_rate"], run["max_drawdown"],
+                    f"Nuevo campeón {run_symbol} — superó ${champ_cap:.2f}",
+                ))
+                conn.commit()
+                print(f"[champion] NUEVO CAMPEON {run_symbol}: {run['strategy']} ${run['capital_final']:.2f} (anterior ${champ_cap:.2f})")
+                # Retornar el primer nuevo campeón (para Telegram notification)
+                if new_champion is None:
+                    new_champion = dict(run)
+
         conn.close()
-        return None
+        return new_champion
     except Exception as e:
         print(f"[champion] error coronando campeón: {e}")
         return None
@@ -1212,7 +1228,7 @@ async def learn():
         if last_batch:
             cur.execute("""
                 SELECT strategy, params_json, dataset, sharpe_ratio, total_trades,
-                       win_rate, max_drawdown, capital_inicial, capital_final, pnl_pct, batch_id
+                       win_rate, max_drawdown, capital_inicial, capital_final, pnl_pct, batch_id, symbol
                 FROM runs WHERE dataset = 'valid' AND batch_id = ?
                 ORDER BY capital_final DESC
             """, (last_batch,))
@@ -1223,7 +1239,7 @@ async def learn():
         # También leer últimos 20 para dar contexto al LLM
         cur.execute("""
             SELECT strategy, params_json, dataset, sharpe_ratio, total_trades,
-                   win_rate, max_drawdown, capital_final, pnl_pct, batch_id
+                   win_rate, max_drawdown, capital_final, pnl_pct, batch_id, symbol
             FROM runs WHERE dataset = 'valid'
             ORDER BY created_at DESC LIMIT 20
         """)
@@ -1262,7 +1278,7 @@ async def learn():
         "Categorías VÁLIDAS (usar exactamente): parameter_insight, dead_end, promising_direction, strategy_ranking, external_research."
     )
     try:
-        raw = await _call_llm(prompt, "Sos un quant que extrae learnings de backtests. Respondé SIEMPRE en JSON válido sin texto adicional.", max_tokens=512, temperature=0.5)
+        raw = await _call_llm(prompt, "Sos un quant que extrae learnings de backtests multi-coin (BTC, ETH, SOL). Respondé SIEMPRE en JSON válido sin texto adicional.", max_tokens=512, temperature=0.5)
         data = _parse_json_from_llm(raw)
         learnings_list = data.get("learnings", [])
         cycle_summary = data.get("cycle_summary", "")

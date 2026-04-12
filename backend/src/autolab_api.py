@@ -2128,6 +2128,53 @@ def metrics_analysis():
         raise HTTPException(500, f"{e}\n{traceback.format_exc()}")
 
 
+@app.get("/metrics/candles")
+def metrics_candles(
+    symbol: str = Query("BTCUSDT"),
+    timeframe: str = Query("4h"),
+    dataset: str = Query("valid"),
+    limit: int = Query(500, description="Últimas N velas"),
+):
+    """Velas OHLCV desde la DB de backtesting para el candlestick chart."""
+    try:
+        conn = get_sqlite()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT timestamp as ts, open, high, low, close, volume AS volume_usdt
+            FROM candles
+            WHERE symbol = ? AND timeframe = ? AND dataset = ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+        """, (symbol, timeframe, dataset, limit))
+        rows = [dict(r) for r in cur.fetchall()]
+        rows.reverse()  # cronológico
+
+        # Trades del campeón para overlay (opcional)
+        champion = _get_champion()
+        trades = []
+        if champion:
+            cur.execute("""
+                SELECT entrada_fecha, salida_fecha, precio_entrada, precio_salida,
+                       resultado, pnl_pct
+                FROM trades
+                WHERE run_id = ?
+                ORDER BY entrada_fecha
+            """, (champion.get("run_id", ""),))
+            trades = [dict(r) for r in cur.fetchall()]
+
+        conn.close()
+        return {
+            "symbol": symbol,
+            "timeframe": timeframe,
+            "dataset": dataset,
+            "candles": rows,
+            "count": len(rows),
+            "champion_trades": trades,
+        }
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
 @app.get("/metrics/system")
 def metrics_system():
     """Estadísticas generales del sistema — tamaños de DB, conteos."""

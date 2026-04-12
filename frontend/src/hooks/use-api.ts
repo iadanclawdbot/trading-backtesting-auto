@@ -12,6 +12,7 @@ import type {
   ChampionHistoryResponse,
   CyclesResponse,
   SystemMetricsResponse,
+  CandlesResponse,
 } from "@/types/api";
 
 // Config base de polling — datos cambian cada 30 min en el backend
@@ -92,4 +93,13 @@ export function useSystemMetrics() {
     ...SWR_BASE,
     refreshInterval: 60_000,
   });
+}
+
+// Velas OHLCV de backtesting: cada 5 min (datos estáticos)
+export function useCandles(timeframe: string = "4h", dataset: string = "valid", limit: number = 500) {
+  return useSWR<CandlesResponse>(
+    `/metrics/candles?timeframe=${timeframe}&dataset=${dataset}&limit=${limit}`,
+    fetcher,
+    { ...SWR_BASE, refreshInterval: 300_000 }
+  );
 }

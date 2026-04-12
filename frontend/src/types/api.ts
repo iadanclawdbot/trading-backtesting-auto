@@ -165,6 +165,34 @@ export interface CyclesResponse {
   count: number;
 }
 
+// GET /metrics/candles
+export interface CandlePoint {
+  ts: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume_usdt: number;
+}
+
+export interface ChampionTrade {
+  entrada_fecha: string;
+  salida_fecha: string;
+  precio_entrada: number;
+  precio_salida: number;
+  resultado: string;
+  pnl_pct: number;
+}
+
+export interface CandlesResponse {
+  symbol: string;
+  timeframe: string;
+  dataset: string;
+  candles: CandlePoint[];
+  count: number;
+  champion_trades: ChampionTrade[];
+}
+
 // GET /metrics/system
 export interface SystemMetricsResponse {
   db_size_mb: number;

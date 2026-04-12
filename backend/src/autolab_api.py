@@ -218,28 +218,60 @@ def get_context(
         conn = get_sqlite()
         cur = conn.cursor()
 
-        # Top N resultados OOS de todos los tiempos
-        # Excluir runs con WR=100% (artefacto de breakeven_after_r=0)
+        # Top N resultados OOS — diversificados por estrategia
+        # Cada estrategia obtiene al menos per_strategy slots para evitar
+        # que una sola estrategia domine el contexto y sesgue al LLM.
+        strategies = ["vwap_pullback", "breakout", "mean_reversion", "ema_crossover"]
+        per_strategy = max(3, top_n // len(strategies))
+        union_parts = []
+        for strat in strategies:
+            union_parts.append(f"""
+                SELECT * FROM (
+                    SELECT r.strategy, r.params_json, r.sharpe_ratio AS sharpe_oos,
+                           r.total_trades AS trades_oos, r.win_rate AS wr_oos,
+                           r.max_drawdown AS dd_oos, r.created_at,
+                           r.capital_final,
+                           t.sharpe_ratio AS sharpe_train
+                    FROM runs r
+                    LEFT JOIN runs t ON (
+                        t.experiment_id = r.experiment_id
+                        AND t.dataset = 'train'
+                    )
+                    WHERE r.dataset = 'valid' AND r.total_trades >= 15
+                      AND (r.win_rate IS NULL OR r.win_rate < 95.0)
+                      AND r.strategy = '{strat}'
+                    ORDER BY r.capital_final DESC
+                    LIMIT {per_strategy}
+                )
+            """)
         cur.execute(f"""
-            SELECT r.strategy, r.params_json, r.sharpe_ratio AS sharpe_oos,
-                   r.total_trades AS trades_oos, r.win_rate AS wr_oos,
-                   r.max_drawdown AS dd_oos, r.created_at,
-                   r.capital_final,
-                   t.sharpe_ratio AS sharpe_train
-            FROM runs r
-            LEFT JOIN runs t ON (
-                t.experiment_id = r.experiment_id
-                AND t.dataset = 'train'
-            )
-            WHERE r.dataset = 'valid' AND r.total_trades >= 15
-              AND (r.win_rate IS NULL OR r.win_rate < 95.0)
-            ORDER BY r.sharpe_ratio DESC
+            SELECT * FROM ({' UNION ALL '.join(union_parts)})
+            ORDER BY capital_final DESC
             LIMIT {top_n}
         """)
-        top_results = [
+        top_results_raw = [
             {k: v.replace('\x00', '') if isinstance(v, str) else v for k, v in dict(row).items()}
             for row in cur.fetchall()
         ]
+        # Strip ghost params de resultados históricos (RCA-6)
+        valid_params_by_strategy = {
+            "breakout": {"lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r"},
+            "vwap_pullback": {"sl_atr_mult","trail_atr_mult","adx_filter","vol_ratio_min","breakeven_after_r","ema_trend_period","ema_trend_daily_period"},
+            "mean_reversion": {"rsi_period","rsi_oversold","bb_period","bb_std","atr_period","sl_atr_mult","ema_trend_period","breakeven_after_r","max_hold_bars"},
+            "ema_crossover": {"sl_atr_mult","trail_atr_mult","adx_filter","vol_ratio_min","breakeven_after_r","ema_trend_period","ema_trend_daily_period"},
+        }
+        top_results = []
+        for row in top_results_raw:
+            if row.get("params_json"):
+                try:
+                    params = json.loads(row["params_json"]) if isinstance(row["params_json"], str) else row["params_json"]
+                    valid_keys = valid_params_by_strategy.get(row.get("strategy", ""), set())
+                    if valid_keys:
+                        params = {k: v for k, v in params.items() if k in valid_keys}
+                    row["params_json"] = json.dumps(params, sort_keys=True)
+                except (json.JSONDecodeError, TypeError):
+                    pass
+            top_results.append(row)
 
         # Resultados del último ciclo si se proporciona batch_id
         last_cycle = []
@@ -765,9 +797,34 @@ async def analyze():
     except Exception:
         best_sharpe = 1.166
 
+    # Staleness: ciclos consecutivos sin nuevo campeón
+    analyze_stale_cycles = 0
+    try:
+        pg_s = get_postgres()
+        cur_s = pg_s.cursor()
+        cur_s.execute("""
+            SELECT beat_benchmark FROM autolab_cycles
+            WHERE phase = 'complete'
+            ORDER BY finished_at DESC LIMIT 50
+        """)
+        for r in cur_s.fetchall():
+            if not r[0]:
+                analyze_stale_cycles += 1
+            else:
+                break
+        pg_s.close()
+    except Exception:
+        pass
+
     # Sección del campeón para el prompt
     if champion:
         champ_params = json.loads(champion["params_json"]) if isinstance(champion.get("params_json"), str) else champion.get("params_json", {})
+        stale_warning = ""
+        if analyze_stale_cycles >= 10:
+            stale_warning = (
+                f"\n  ⚠️ ESTANCAMIENTO: {analyze_stale_cycles} ciclos consecutivos sin superar al campeón. "
+                "La micro-optimización está agotada — priorizá exploración radical."
+            )
         champion_section = (
             f"\n\nCAMPEON ACTUAL (estrategia que más dinero ganó):\n"
             f"  Estrategia: {champion['strategy']}\n"
@@ -775,6 +832,7 @@ async def analyze():
             f"  Sharpe: {champion['sharpe_ratio']:.3f} | Trades: {champion['total_trades']} | WR: {champion['win_rate']:.1f}%\n"
             f"  Params: {json.dumps(champ_params)}\n"
             f"  OBJETIVO: superar ${champion['capital_final']:.2f} en el período de validación."
+            + stale_warning
         )
     else:
         champion_section = f"\n\nNo hay campeón registrado aún. Benchmark Sharpe: {best_sharpe}"
@@ -785,12 +843,14 @@ async def analyze():
         "Top resultados:\n" + json.dumps(top_results) +
         "\n\nLearnings:\n" + json.dumps(learnings) +
         "\n\nDirectivas Opus:\n" + json.dumps(ctx["opus_insights"]) +
-        "\n\nAnalizá patrones. Las ÚNICAS estrategias válidas son: breakout, vwap_pullback. "
+        "\n\nAnalizá patrones. Estrategias válidas: breakout, vwap_pullback, mean_reversion. "
         "Considerá los params del campeón como punto de partida — explorá variaciones que puedan superarlo. "
+        "IMPORTANTE: Si el campeón lleva muchos ciclos sin ser superado, priorizá exploración diversa "
+        "(otras estrategias, rangos de params más amplios) sobre micro-optimización del campeón.\n"
         "Respondé con JSON COMPACTO (máx 5 items por lista, cada item es un string corto de 1 línea):\n"
         "{\"patterns_positive\": [\"...\"], \"patterns_negative\": [\"...\"], "
         "\"parameter_insights\": [\"...\"], \"suggested_direction\": \"...\", "
-        "\"strategies_to_prioritize\": [\"breakout\", \"vwap_pullback\"]}"
+        "\"strategies_to_prioritize\": [\"breakout\", \"vwap_pullback\", \"mean_reversion\"]}"
     )
     try:
         raw = await _call_llm(prompt, "Sos un analista cuantitativo senior de backtesting BTC/USDT. Respondé SIEMPRE en JSON válido sin texto adicional.", max_tokens=2048, model=LLM_MODEL_ANALYSIS)
@@ -829,6 +889,27 @@ async def hypothesize():
     analysis = _load_session("last_analysis")
     saved_champion = _load_session("last_champion")
 
+    # Detección de estancamiento: contar ciclos consecutivos sin nuevo campeón
+    stale_cycles = 0
+    try:
+        pg_stale = get_postgres()
+        cur_stale = pg_stale.cursor()
+        cur_stale.execute("""
+            SELECT beat_benchmark FROM autolab_cycles
+            WHERE phase = 'complete'
+            ORDER BY finished_at DESC
+            LIMIT 50
+        """)
+        for r in cur_stale.fetchall():
+            if not r[0]:
+                stale_cycles += 1
+            else:
+                break
+        pg_stale.close()
+        print(f"[hypothesize] stale_cycles={stale_cycles} (ciclos consecutivos sin nuevo campeón)")
+    except Exception as stale_e:
+        print(f"[hypothesize] no se pudo calcular staleness: {stale_e}")
+
     # Leer ideas externas de external_research (PostgreSQL)
     # Ciclo de maduración: pending (nuevas) + testing (en proceso, max 3 ciclos)
     external_ideas = []
@@ -866,7 +947,7 @@ async def hypothesize():
             "Para cada experimento inspirado en una idea externa, poné en notes: 'external:ID_N' (donde N es el id de la idea)."
         )
 
-    # Sección del campeón para guiar la exploración
+    # Sección del campeón + presión de exploración según staleness
     if saved_champion:
         champ_params = saved_champion.get("params_json", "{}")
         if isinstance(champ_params, str):
@@ -874,15 +955,46 @@ async def hypothesize():
                 champ_params = json.loads(champ_params)
             except Exception:
                 champ_params = {}
+        # Limpiar ghost params del campeón antes de mostrárselos al LLM
+        valid_champ_keys = {
+            "breakout": {"lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r"},
+            "vwap_pullback": {"sl_atr_mult","trail_atr_mult","adx_filter","vol_ratio_min","breakeven_after_r","ema_trend_period","ema_trend_daily_period"},
+            "mean_reversion": {"rsi_period","rsi_oversold","bb_period","bb_std","atr_period","sl_atr_mult","ema_trend_period","breakeven_after_r","max_hold_bars"},
+        }
+        valid_keys_for_champ = valid_champ_keys.get(saved_champion["strategy"], set())
+        if valid_keys_for_champ:
+            champ_params = {k: v for k, v in champ_params.items() if k in valid_keys_for_champ}
+
         champion_section = (
             f"\n\nCAMPEON A SUPERAR:\n"
             f"  Estrategia: {saved_champion['strategy']} | Capital final: ${saved_champion['capital_final']:.2f} (+{saved_champion['pnl_pct']:.1f}%)\n"
             f"  Sharpe: {saved_champion['sharpe_ratio']:.3f} | Trades: {saved_champion['total_trades']} | WR: {saved_champion['win_rate']:.1f}%\n"
-            f"  Params actuales: {json.dumps(champ_params)}\n\n"
-            "ESTRATEGIA: Incluí al menos 3 variaciones del campeón (cambiar 1-2 params a la vez) "
-            "y 2-3 experimentos alternativos con otra estrategia que compitan. "
-            "El objetivo es superar ese capital_final manteniendo o mejorando el Sharpe."
+            f"  Params actuales: {json.dumps(champ_params)}\n"
+            f"  Ciclos sin ser superado: {stale_cycles}\n"
         )
+
+        # Presión de exploración proporcional al estancamiento
+        if stale_cycles >= 20:
+            champion_section += (
+                "\n⚠️ ALERTA: ESTANCAMIENTO SEVERO ({} ciclos sin mejora). "
+                "La micro-optimización del campeón está AGOTADA. "
+                "OBLIGATORIO: Al menos 5 de 8 experimentos deben ser de estrategias DIFERENTES al campeón. "
+                "Probá combinaciones radicalmente distintas: rangos extremos, "
+                "mean_reversion agresiva, breakout con params muy diferentes al historial."
+            ).format(stale_cycles)
+        elif stale_cycles >= 10:
+            champion_section += (
+                "\n⚠️ ESTANCAMIENTO DETECTADO ({} ciclos sin mejora). "
+                "La optimización fina no está funcionando. "
+                "Al menos 4 de 8 experimentos deben ser de estrategias DIFERENTES al campeón. "
+                "Explorá rangos más amplios y combinaciones no probadas."
+            ).format(stale_cycles)
+        else:
+            champion_section += (
+                "\nESTRATEGIA: Incluí al menos 3 variaciones del campeón (cambiar 1-2 params a la vez) "
+                "y 2-3 experimentos alternativos con otra estrategia que compitan. "
+                "El objetivo es superar ese capital_final manteniendo o mejorando el Sharpe."
+            )
     else:
         champion_section = "\n\nNo hay campeón registrado — explorá libremente el espacio de params."
 
@@ -902,7 +1014,7 @@ async def hypothesize():
         "mean_reversion params: rsi_period(7-21), rsi_oversold(25-40), bb_period(14-30), "
         "bb_std(1.5-3.0), atr_period(7-21), sl_atr_mult(1.5-3.0), "
         "ema_trend_period(20-200), breakeven_after_r(0=disabled, 0.5-1.0), max_hold_bars(10-40).\n"
-        "Incluí al menos 1-2 experimentos de mean_reversion para explorar nueva estrategia.\n"
+        "Incluí al menos 2-3 experimentos de mean_reversion y 1-2 de breakout para diversificar.\n"
         "Respondé SOLO con JSON: {experiments: [{strategy, params, notes}]}"
     )
     try:

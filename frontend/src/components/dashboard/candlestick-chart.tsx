@@ -103,9 +103,9 @@ export function CandlestickChart() {
 
     seriesRef.current.setData(candles);
 
-    // Overlay champion trades as markers
-    if (data.champion_trades?.length && seriesRef.current) {
-      const markerData = [];
+    // Build markers from champion trades (empty array if no trades for this coin)
+    const markerData = [];
+    if (data.champion_trades?.length) {
       for (const t of data.champion_trades) {
         const entryTs = findNearestTs(data.candles.map((c) => c.ts), t.entrada_fecha);
         const exitTs = findNearestTs(data.candles.map((c) => c.ts), t.salida_fecha);
@@ -130,11 +130,12 @@ export function CandlestickChart() {
         }
       }
       markerData.sort((a, b) => (a.time as number) - (b.time as number));
+    }
 
-      // Clean up previous markers primitive
-      if (markersRef.current) {
-        seriesRef.current.detachPrimitive(markersRef.current);
-      }
+    // Update markers: create once, then use setMarkers to update/clear
+    if (markersRef.current) {
+      markersRef.current.setMarkers(markerData);
+    } else if (seriesRef.current) {
       markersRef.current = createSeriesMarkers(seriesRef.current, markerData);
     }
 

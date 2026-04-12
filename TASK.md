@@ -2,7 +2,7 @@
 
 > Documento vivo de planificación. Revisar y actualizar en cada sesión.
 > Marcar `[x]` al completar. Agregar ítems nuevos cuando aparezcan.
-> Última actualización: 2026-04-08
+> Última actualización: 2026-04-12
 
 ---
 
@@ -22,8 +22,10 @@
 | Frontend dashboard (Vercel)          | ✅ 18 componentes, 9 endpoints, 3 páginas     | 2026-04-08 |
 | Backend /metrics/* endpoints         | ✅ 4 endpoints activos en producción           | 2026-04-12 |
 | Fixes estancamiento (RCA-1 a RCA-7)  | ✅ 7 RCAs resueltos — 6 estrategias habilitadas | 2026-04-12 |
-| Opus Insights                        | ✅ 6 insights publicados — guían próxima semana | 2026-04-12 |
-| Ciclo autónomo                       | 🔄 Pendiente redeploy con estrategias nuevas  | 2026-04-12 |
+| Opus Insights                        | ✅ 17 insights publicados — plan mensual completo | 2026-04-12 |
+| Ciclo autónomo                       | 🔄 Redeploy con 6 estrategias + staleness detection | 2026-04-12 |
+| Skill /update                        | ✅ .claude/skills/update/SKILL.md creado       | 2026-04-12 |
+| Endpoint /metrics/analysis           | ✅ Analytics profundo sobre la DB              | 2026-04-12 |
 
 **Campeón actual** (al 2026-04-12, sin cambio desde 2026-03-28):
 `vwap_pullback` | Capital: $338.30 (+35.3%) | Sharpe OOS: 1.593 | Trades: 19
@@ -124,16 +126,28 @@ Hacer en orden. Bloquean todo lo demás.
 
 ---
 
+## 🟠 CORTO PLAZO — Mejoras del motor y ciclo autónomo
+
+- [x] Fix RCA-4 a RCA-7: estancamiento del ciclo (commit `0319b4e`) ✅ 2026-04-12
+- [x] Habilitar 6 estrategias nuevas en /hypothesize (commit `d9b8b62`) ✅ 2026-04-12
+- [x] Opus Analyst: 17 insights + plan mensual 4 semanas (commit `d9b8b62`) ✅ 2026-04-12
+- [x] Fix ghost params de ema_crossover — usaba params que el motor ignora (commit `37bf1f7`) ✅ 2026-04-12
+- [x] Endpoint /metrics/analysis para analytics profundo (commit `aaf081e`) ✅ 2026-04-12
+- [x] Skill /update + limpieza artefactos testing (commit `62096ff`) ✅ 2026-04-12
+- [x] **Fix LEFT JOIN duplicados en /context** — subquery LIMIT 1 para sharpe_train ✅ 2026-04-12
+- [x] **Upgrade ema_crossover a ATR trailing** — nuevo motor `correr_backtest_ema_trailing` + `calcular_indicadores_ema_atr` ✅ 2026-04-12
+- [x] **Fix benchmark en generar_batch_report.py** — actualizado a vwap_pullback campeón ✅ 2026-04-12
+- [ ] **Verificar 24-48h post-deploy** — confirmar diversidad en experiments y learnings nuevos
+
+---
+
 ## 🟢 LIMPIEZA — Baja prioridad
 
 - [x] **Fix `/status` y `/context`** — Sharpe 4.189 WR 100% era artifact de `breakeven_after_r=0`
 
   - Filtro agregado: `AND win_rate < 95.0` en `/status` y `/context`
   - Archivo: `backend/src/autolab_api.py`
-- [ ] **Fix benchmark en `generar_batch_report.py`**
-
-  - Línea ~30: hardcodeado a V2 (Sharpe 0.581) → cambiar a V5 (1.166)
-  - Archivo: `backend/backtesting/generar_batch_report.py`
+- [x] **Fix benchmark en `generar_batch_report.py`** — actualizado a campeón actual ✅ 2026-04-12
 - [ ] **Re-exportar workflows n8n** — los JSON en `backend/n8n/` no reflejan la arquitectura v3
 - [ ] **Autenticación en la API** — todos los endpoints son públicos
 
@@ -151,7 +165,10 @@ Hacer en orden. Bloquean todo lo demás.
 - [x] Repo `iadanclawdbot/trading-backtesting-auto` creado y pusheado en GitHub (2026-04-07)
 - [x] Todos los archivos del repo actualizados para reflejar nueva estructura (2026-04-07)
 - [x] Fix estancamiento RCA-4 a RCA-7 (2026-04-12) — commit `0319b4e`
-- [x] Opus Analyst: 6 insights publicados + 6 estrategias habilitadas (2026-04-12) — commit `d9b8b62`
+- [x] Opus Analyst: 17 insights + plan mensual + 6 estrategias (2026-04-12) — commits `d9b8b62`, `aaf081e`
+- [x] Fix ghost params ema_crossover (2026-04-12) — commit `37bf1f7`
+- [x] Análisis profundo DB: sensibilidad params, overfitting, distribuciones (2026-04-12)
+- [x] Skill /update + limpieza artefactos testing (2026-04-12) — commit `62096ff`
 
 ---
 
@@ -164,3 +181,5 @@ Hacer en orden. Bloquean todo lo demás.
 | `signal_type` default     | Todos los runs guardados como "ema_crossover"        | Siempre pasar `signal_type` explícitamente           |
 | Learnings no se guardaban   | CHECK constraint en Supabase fallaba silenciosamente | Verificar constraints antes de asumir que funciona      |
 | Ciclo mostraba datos viejos | `/learn` leía todos los runs globales             | Siempre filtrar por `batch_id` del ciclo actual       |
+| ema_crossover ghost params | Motor usa SL/TP fijo pero se generaban sl_atr_mult | Verificar qué params LEE el motor antes de agregarlos |
+| LEFT JOIN duplicados        | JOIN con train crea filas duplicadas en /context  | Usar subquery LIMIT 1 para sharpe_train               |

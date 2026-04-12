@@ -46,23 +46,40 @@ El campeón `vwap_pullback` ($338.30) llevaba 15 días sin ser superado (desde 2
 - `retest` — entrada en pullback post-breakout, menor drawdown
 - REQUIRED, VALID_RANGES, prompt y /context actualizados para 6 estrategias
 
+**Análisis profundo de la DB** (17,561 runs):
+- Endpoint `/metrics/analysis` con distribución por estrategia, overfitting check, sensibilidad de params
+- Hallazgo: breakout tiene overfit masivo (train 1.42 → valid -0.26)
+- Hallazgo: vwap_pullback tiene el menor overfit (gap 0.335)
+- Hallazgo: win rate óptimo es 60-70%, NO más alto
+- Hallazgo CRÍTICO: ema_crossover usaba ghost params — motor usa SL/TP fijo, no ATR
+
+**Fixes adicionales:**
+- LEFT JOIN duplicados en /context → subquery LIMIT 1
+- Benchmark en generar_batch_report.py → actualizado a campeón actual
+- ema_crossover upgradeado a ATR trailing (`correr_backtest_ema_trailing` + `calcular_indicadores_ema_atr`)
+- Limpieza: 11 PNGs + .playwright-mcp/ eliminados, .gitignore actualizado
+- Skill `/update` creada en `.claude/skills/update/SKILL.md`
+- 17 Opus insights publicados (6 iniciales + 7 plan mensual + 4 análisis profundo)
+
 ### Pendiente al cierre
 - [ ] Verificar redeploy exitoso en Coolify
-- [ ] 24-48h después: confirmar que el loop genera experimentos de las nuevas estrategias
-- [ ] Fix LEFT JOIN duplicados en /context (warning insight #6)
+- [ ] 24-48h después: confirmar diversidad en experiments nuevos
 - [ ] Animaciones con Motion (frontend)
 - [ ] Candlestick chart con lightweight-charts
+- [ ] Re-exportar workflows n8n
+- [ ] Autenticación en la API (X-API-Key)
 
 ### Estado del sistema al cierre
 | Componente | Estado |
 |------------|--------|
-| AutoLab API | ✅ UP — sqlite y postgresql conectados |
-| GitHub repo | ✅ main al día — commit `d9b8b62` |
-| Coolify | ⏳ Redeploy en proceso (3 commits nuevos) |
-| Opus Insights | ✅ 6 insights publicados |
+| AutoLab API | ✅ UP — pendiente redeploy con cambios de hoy |
+| GitHub repo | ✅ main al día |
+| Coolify | ⏳ Redeploy en proceso |
+| Opus Insights | ✅ 17 insights publicados — plan mensual 4 semanas |
 | Champion | `vwap_pullback` — $338.30 (+35.3%) — Sharpe 1.593 (15 días sin cambio) |
-| Estrategias habilitadas | 6 (antes 3): +ema_crossover, +breakdown_short, +retest |
-| Ciclo autónomo | 🔄 Pendiente redeploy — diversidad forzada + exploración radical |
+| Estrategias habilitadas | 6 (antes 3): +ema_crossover (ATR trailing v2), +breakdown_short, +retest |
+| ema_crossover | ✅ Upgradeado a ATR trailing (antes SL/TP fijo) |
+| Ciclo autónomo | 🔄 Pendiente redeploy — diversidad forzada + 6 estrategias + staleness detection |
 | Runs totales | 17,561 runs / 8,812 experiments / 423k trades / DB 6.6 GB |
 
 ---

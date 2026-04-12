@@ -39,6 +39,8 @@ from motor_base import (
     correr_backtest_funding_reversion,
     calcular_indicadores_vwap,
     correr_backtest_vwap,
+    calcular_indicadores_ema_atr,
+    correr_backtest_ema_trailing,
     calcular_metricas,
 )
 from fase1_motor import guardar_en_db, cargar_velas
@@ -150,6 +152,12 @@ MOTORES = {
         "timeframe":   "4h",
     },
     "ema_crossover": {
+        "indicadores": calcular_indicadores_ema_atr,
+        "backtest":    correr_backtest_ema_trailing,
+        "symbol":      "BTCUSDT",
+        "timeframe":   "1h",
+    },
+    "ema_crossover_legacy": {
         "indicadores": calcular_indicadores,
         "backtest":    correr_backtest_base,
         "symbol":      "BTCUSDT",

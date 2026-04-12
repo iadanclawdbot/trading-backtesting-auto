@@ -232,12 +232,11 @@ def get_context(
                            r.total_trades AS trades_oos, r.win_rate AS wr_oos,
                            r.max_drawdown AS dd_oos, r.created_at,
                            r.capital_final,
-                           t.sharpe_ratio AS sharpe_train
+                           (SELECT t.sharpe_ratio FROM runs t
+                            WHERE t.experiment_id = r.experiment_id
+                              AND t.dataset = 'train'
+                            LIMIT 1) AS sharpe_train
                     FROM runs r
-                    LEFT JOIN runs t ON (
-                        t.experiment_id = r.experiment_id
-                        AND t.dataset = 'train'
-                    )
                     WHERE r.dataset = 'valid' AND r.total_trades >= 15
                       AND (r.win_rate IS NULL OR r.win_rate < 95.0)
                       AND r.strategy = '{strat}'
@@ -259,7 +258,7 @@ def get_context(
             "breakout": {"lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r"},
             "vwap_pullback": {"sl_atr_mult","trail_atr_mult","adx_filter","vol_ratio_min","breakeven_after_r","ema_trend_period","ema_trend_daily_period"},
             "mean_reversion": {"rsi_period","rsi_oversold","bb_period","bb_std","atr_period","sl_atr_mult","ema_trend_period","breakeven_after_r","max_hold_bars"},
-            "ema_crossover": {"ema_fast","ema_slow","rsi_period","rsi_min","rsi_max","stop_loss_pct","take_profit_pct","vol_ratio_min","vol_period","ema_gap_min"},
+            "ema_crossover": {"ema_fast","ema_slow","rsi_period","rsi_min","rsi_max","sl_atr_mult","trail_atr_mult","vol_ratio_min","vol_period","ema_gap_min","breakeven_after_r","max_hold_bars","stop_loss_pct","take_profit_pct"},
             "breakdown_short": {"lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r"},
             "breakdown": {"lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r"},
             "retest": {"lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r","max_retest_bars"},
@@ -1021,10 +1020,10 @@ async def hypothesize():
         "mean_reversion params: rsi_period(7-21), rsi_oversold(25-40), bb_period(14-30), "
         "bb_std(1.5-3.0), atr_period(7-21), sl_atr_mult(1.5-3.0), "
         "ema_trend_period(20-200), breakeven_after_r(0=disabled, 0.5-1.0), max_hold_bars(10-40).\n"
-        "ema_crossover params (timeframe 1h! SL/TP fijo, NO trailing): ema_fast(5-30), ema_slow(20-100), "
-        "rsi_period(7-21), rsi_min(30-60), rsi_max(60-85), stop_loss_pct(0.005-0.03), "
-        "take_profit_pct(0.01-0.06), vol_ratio_min(0.3-2.0). Fue el PRIMER campeón ($309). "
-        "IMPORTANTE: ema_slow DEBE ser > ema_fast. stop_loss_pct es % del precio (0.01=1%), take_profit_pct igual.\n"
+        "ema_crossover params (timeframe 1h! ATR trailing): ema_fast(5-30), ema_slow(20-100), "
+        "rsi_period(7-21), rsi_min(30-60), rsi_max(60-85), sl_atr_mult(1.0-4.0), "
+        "trail_atr_mult(1.5-4.0), vol_ratio_min(0.3-2.0), breakeven_after_r(0=disabled, 0.5-1.5), "
+        "max_hold_bars(15-60). IMPORTANTE: ema_slow DEBE ser > ema_fast. Fue el PRIMER campeón ($309).\n"
         "breakdown_short params (shorts!): lookback(10-40), vol_ratio_min(0.8-3.0), atr_period(10-20), "
         "sl_atr_mult(0.75-4.0), trail_atr_mult(1.5-4.0), ema_trend_period(10-50), "
         "ema_trend_daily_period(15-60), adx_filter(0-35), breakeven_after_r(0=disabled, 0.5-1.5).\n"
@@ -1048,7 +1047,7 @@ async def hypothesize():
         "breakout": ["lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r"],
         "vwap_pullback": ["sl_atr_mult","trail_atr_mult","adx_filter","vol_ratio_min","breakeven_after_r","ema_trend_period","ema_trend_daily_period"],
         "mean_reversion": ["rsi_period","rsi_oversold","bb_period","bb_std","atr_period","sl_atr_mult","ema_trend_period"],
-        "ema_crossover": ["ema_fast","ema_slow","rsi_period","rsi_min","rsi_max","stop_loss_pct","take_profit_pct","vol_ratio_min"],
+        "ema_crossover": ["ema_fast","ema_slow","rsi_period","rsi_min","rsi_max","sl_atr_mult","trail_atr_mult","vol_ratio_min"],
         "breakdown_short": ["lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r"],
         "retest": ["lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r","max_retest_bars"],
     }
@@ -1068,8 +1067,9 @@ async def hypothesize():
         "ema_crossover": {
             "ema_fast": (5, 30), "ema_slow": (20, 100),
             "rsi_period": (7, 21), "rsi_min": (30, 60), "rsi_max": (60, 85),
-            "stop_loss_pct": (0.005, 0.03), "take_profit_pct": (0.01, 0.06),
-            "vol_ratio_min": (0.3, 2.0),
+            "sl_atr_mult": (1.0, 4.0), "trail_atr_mult": (1.5, 4.0),
+            "vol_ratio_min": (0.3, 2.0), "breakeven_after_r": (0, 1.5),
+            "max_hold_bars": (15, 60),
         },
         "breakdown_short": {
             "lookback": (10, 40), "vol_ratio_min": (0.8, 3.0), "atr_period": (10, 20),

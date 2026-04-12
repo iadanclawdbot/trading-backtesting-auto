@@ -2368,3 +2368,183 @@ def correr_backtest_vwap(df, params, rules=None, costs=None,
         i += 1
 
     return trades, capital, logger.states
+
+
+# =============================================================================
+# MOTOR EMA CROSSOVER v2 — ATR TRAILING STOPS
+# =============================================================================
+
+
+def calcular_indicadores_ema_atr(df, params):
+    """
+    Indicadores para EMA Crossover con ATR trailing.
+    Combina los indicadores base (RSI, EMA fast/slow, vol_ratio)
+    con ATR para trailing stops dinámicos.
+    """
+    df = df.copy()
+
+    rsi_period = params.get("rsi_period", 14)
+    ema_fast_period = params.get("ema_fast", 20)
+    ema_slow_period = params.get("ema_slow", 50)
+    vol_period = params.get("vol_period", 20)
+    atr_period = params.get("atr_period", 14)
+
+    # RSI
+    delta = df["close"].diff()
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+    avg_gain = gain.ewm(com=rsi_period - 1, min_periods=rsi_period).mean()
+    avg_loss = loss.ewm(com=rsi_period - 1, min_periods=rsi_period).mean()
+    rs = avg_gain / avg_loss.replace(0, np.nan)
+    df["rsi"] = 100 - (100 / (1 + rs))
+
+    # EMAs
+    df["ema_fast"] = df["close"].ewm(span=ema_fast_period, adjust=False).mean()
+    df["ema_slow"] = df["close"].ewm(span=ema_slow_period, adjust=False).mean()
+
+    # Volume ratio
+    df["vol_sma"] = df["volume_btc"].rolling(window=vol_period).mean()
+    df["vol_ratio"] = df["volume_btc"] / df["vol_sma"].replace(0, np.nan)
+
+    # ATR para trailing stops
+    tr = pd.concat([
+        df["high"] - df["low"],
+        (df["high"] - df["close"].shift(1)).abs(),
+        (df["low"] - df["close"].shift(1)).abs(),
+    ], axis=1).max(axis=1)
+    df["atr"] = tr.ewm(span=atr_period, adjust=False).mean()
+
+    df.dropna(subset=["rsi", "ema_fast", "ema_slow", "vol_ratio", "atr"], inplace=True)
+    return df
+
+
+def correr_backtest_ema_trailing(df, params, rules=None, costs=None,
+                                  initial_capital=None, log_candles=True):
+    """
+    EMA Crossover con ATR trailing stops (v2).
+    Señal: misma que generar_señal (EMA fast > slow + RSI + volume).
+    Salida: trailing stop ATR dinámico (como vwap_pullback y breakout).
+    """
+    rules = rules or RULES
+    costs = costs or COSTS
+    initial_capital = initial_capital or INITIAL_CAPITAL
+
+    logger = CandleLogger(enabled=log_candles)
+    trades = []
+    capital = initial_capital
+    indices = df.index.tolist()
+    i = 0
+
+    dia_actual = None
+    pnl_dia = 0.0
+    ops_dia = 0
+    stop_diario = False
+    skip_hasta_idx = None
+
+    sl_atr_mult = params.get("sl_atr_mult", 2.5)
+    trail_atr_mult = params.get("trail_atr_mult", 2.5)
+    max_hold_bars = params.get("max_hold_bars", 30)
+    breakeven_r = params.get("breakeven_after_r", None)
+
+    _open_trade = None
+
+    while i < len(indices):
+        idx = indices[i]
+        vela = df.loc[idx]
+
+        fecha_vela = vela["datetime_ar"][:10]
+        if fecha_vela != dia_actual:
+            dia_actual = fecha_vela
+            pnl_dia = 0.0
+            ops_dia = 0
+            stop_diario = False
+
+        if skip_hasta_idx is not None:
+            if idx <= skip_hasta_idx:
+                if _open_trade:
+                    unrealized = (vela["close"] - _open_trade["price"]) * _open_trade["qty"]
+                    unrealized_net = aplicar_costos(unrealized, _open_trade["qty"],
+                                                    _open_trade["price"], vela["close"])
+                    logger.log(bar_index=i, timestamp=idx,
+                               equity=_open_trade["capital_antes"] + unrealized_net,
+                               in_position=1, trade_num=_open_trade["num"])
+                i += 1
+                continue
+            else:
+                skip_hasta_idx = None
+                _open_trade = None
+
+        if stop_diario:
+            logger.log(bar_index=i, timestamp=idx, equity=capital, in_position=0,
+                       signal_filtered=True, filter_reason="daily_stop")
+            i += 1
+            continue
+
+        if ops_dia >= rules["max_daily_ops"]:
+            logger.log(bar_index=i, timestamp=idx, equity=capital, in_position=0,
+                       signal_filtered=True, filter_reason="max_daily_ops")
+            i += 1
+            continue
+
+        if not generar_señal(vela, params):
+            logger.log(bar_index=i, timestamp=idx, equity=capital, in_position=0,
+                       signal_filtered=True, filter_reason="no_signal")
+            i += 1
+            continue
+
+        entry_price = float(vela["close"])
+        atr_actual = float(vela["atr"])
+        sl_price = entry_price - sl_atr_mult * atr_actual
+        riesgo = entry_price - sl_price
+        if riesgo <= 0:
+            i += 1
+            continue
+
+        qty_btc = (capital * rules["max_risk_pct"]) / riesgo
+        costo = entry_price * qty_btc * (costs["commission_pct"] + costs["slippage_pct"])
+        capital -= costo
+        trade_num = len(trades) + 1
+        ops_dia += 1
+
+        idx_salida, precio_salida, resultado, velas_abierto = buscar_salida_trailing(
+            df, idx, sl_price, trail_atr_mult, max_hold_bars,
+            breakeven_after_r=breakeven_r
+        )
+
+        pnl_bruto = (precio_salida - entry_price) * qty_btc
+        costo_salida = precio_salida * qty_btc * (costs["commission_pct"] + costs["slippage_pct"])
+        pnl_neto = pnl_bruto - costo_salida
+        capital_antes = capital
+        capital += pnl_neto
+        if capital <= 0:
+            capital = 0.0
+
+        pnl_pct = pnl_neto / capital_antes * 100
+        pnl_dia += pnl_neto
+
+        if pnl_dia / capital_antes <= -rules["daily_stop_pct"]:
+            stop_diario = True
+
+        _open_trade = {"price": entry_price, "qty": qty_btc,
+                       "capital_antes": capital_antes, "num": trade_num}
+
+        trades.append({
+            "trade_num": trade_num,
+            "entrada_fecha": vela["datetime_ar"],
+            "salida_fecha": df.loc[idx_salida, "datetime_ar"],
+            "precio_entrada": entry_price,
+            "precio_salida": precio_salida,
+            "resultado": resultado,
+            "pnl_neto": round(pnl_neto, 2),
+            "pnl_pct": round(pnl_pct, 2),
+            "capital_despues": round(capital, 2),
+            "velas_abierto": velas_abierto,
+        })
+
+        logger.log(bar_index=i, timestamp=idx, equity=capital_antes,
+                   in_position=1, trade_num=trade_num)
+
+        skip_hasta_idx = idx_salida
+        i += 1
+
+    return trades, capital, logger.states

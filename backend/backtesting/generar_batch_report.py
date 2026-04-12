@@ -28,11 +28,11 @@ RESULTS_DIR = os.path.join(BASE_DIR, "resultados")
 
 # Benchmark actual — actualizar si cambia el benchmark en historico_aprendizajes.md
 BENCHMARK = {
-    "sharpe": 0.581,
-    "wr":     44.4,
-    "dd":     -4.91,
-    "trades": 18,
-    "nombre": "V2 Breakout 4H + ADX + EMA Diaria",
+    "sharpe": 1.593,
+    "wr":     63.2,
+    "dd":     -4.96,
+    "trades": 19,
+    "nombre": "vwap_pullback campeón ($338.30)",
 }
 
 

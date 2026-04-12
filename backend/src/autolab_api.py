@@ -2155,12 +2155,18 @@ def metrics_candles(
         if champion:
             cur.execute("""
                 SELECT entrada_fecha, salida_fecha, precio_entrada, precio_salida,
-                       resultado, pnl_pct
+                       resultado, pnl_neto, capital_antes
                 FROM trades
                 WHERE run_id = ?
                 ORDER BY entrada_fecha
             """, (champion.get("run_id", ""),))
-            trades = [dict(r) for r in cur.fetchall()]
+            trades = []
+            for r in cur.fetchall():
+                row = dict(r)
+                cap = row.pop("capital_antes", 1) or 1
+                pnl = row.pop("pnl_neto", 0) or 0
+                row["pnl_pct"] = round(pnl / cap * 100, 2)
+                trades.append(row)
 
         conn.close()
         return {

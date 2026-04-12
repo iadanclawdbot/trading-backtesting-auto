@@ -1957,6 +1957,176 @@ def metrics_cycles(limit: int = Query(100, description="Últimos N ciclos")):
         raise HTTPException(500, str(e))
 
 
+@app.get("/metrics/analysis")
+def metrics_analysis():
+    """
+    Análisis profundo de la DB para Opus Analyst.
+    Retorna distribuciones, correlaciones y estadísticas por estrategia/param.
+    """
+    try:
+        conn = get_sqlite()
+        cur = conn.cursor()
+
+        # 1. Distribución por estrategia (solo valid, >=15 trades)
+        cur.execute("""
+            SELECT strategy,
+                   COUNT(*) as total_runs,
+                   AVG(sharpe_ratio) as avg_sharpe,
+                   MAX(sharpe_ratio) as max_sharpe,
+                   MIN(sharpe_ratio) as min_sharpe,
+                   AVG(capital_final) as avg_capital,
+                   MAX(capital_final) as max_capital,
+                   AVG(total_trades) as avg_trades,
+                   AVG(win_rate) as avg_wr,
+                   AVG(max_drawdown) as avg_dd,
+                   SUM(CASE WHEN sharpe_ratio > 1.0 THEN 1 ELSE 0 END) as runs_sharpe_gt1,
+                   SUM(CASE WHEN capital_final > 300 THEN 1 ELSE 0 END) as runs_cap_gt300
+            FROM runs
+            WHERE dataset = 'valid' AND total_trades >= 15
+            GROUP BY strategy
+            ORDER BY avg_capital DESC
+        """)
+        by_strategy = [dict(r) for r in cur.fetchall()]
+
+        # 2. Correlación train vs valid (overfitting check)
+        cur.execute("""
+            SELECT r.strategy,
+                   COUNT(*) as pairs,
+                   AVG(r.sharpe_ratio) as avg_sharpe_valid,
+                   AVG(t.sharpe_ratio) as avg_sharpe_train,
+                   AVG(ABS(r.sharpe_ratio - t.sharpe_ratio)) as avg_sharpe_gap
+            FROM runs r
+            INNER JOIN runs t ON (
+                t.experiment_id = r.experiment_id
+                AND t.dataset = 'train'
+            )
+            WHERE r.dataset = 'valid' AND r.total_trades >= 15
+            GROUP BY r.strategy
+            ORDER BY avg_sharpe_gap ASC
+        """)
+        train_valid_corr = [dict(r) for r in cur.fetchall()]
+
+        # 3. Top 30 runs con params parseados (para análisis de sensibilidad)
+        cur.execute("""
+            SELECT strategy, params_json, sharpe_ratio, capital_final,
+                   total_trades, win_rate, max_drawdown, pnl_pct
+            FROM runs
+            WHERE dataset = 'valid' AND total_trades >= 15
+              AND (win_rate IS NULL OR win_rate < 95.0)
+            ORDER BY capital_final DESC
+            LIMIT 30
+        """)
+        top30 = [dict(r) for r in cur.fetchall()]
+
+        # 4. Bottom 30 (peores — para entender qué NO funciona)
+        cur.execute("""
+            SELECT strategy, params_json, sharpe_ratio, capital_final,
+                   total_trades, win_rate, max_drawdown, pnl_pct
+            FROM runs
+            WHERE dataset = 'valid' AND total_trades >= 15
+            ORDER BY capital_final ASC
+            LIMIT 30
+        """)
+        bottom30 = [dict(r) for r in cur.fetchall()]
+
+        # 5. Distribución temporal — evolución del max capital por semana
+        cur.execute("""
+            SELECT strftime('%Y-W%W', created_at) as week,
+                   COUNT(*) as runs,
+                   MAX(capital_final) as max_capital,
+                   AVG(capital_final) as avg_capital,
+                   MAX(sharpe_ratio) as max_sharpe
+            FROM runs
+            WHERE dataset = 'valid' AND total_trades >= 15
+            GROUP BY week
+            ORDER BY week
+        """)
+        by_week = [dict(r) for r in cur.fetchall()]
+
+        # 6. Análisis de parámetros: sensibilidad por param para vwap_pullback
+        param_sensitivity = {}
+        for param_name in ["sl_atr_mult", "trail_atr_mult", "vol_ratio_min",
+                           "breakeven_after_r", "adx_filter", "ema_trend_period"]:
+            cur.execute(f"""
+                SELECT
+                    ROUND(CAST(json_extract(params_json, '$.{param_name}') AS REAL), 1) as param_val,
+                    COUNT(*) as n,
+                    AVG(capital_final) as avg_capital,
+                    AVG(sharpe_ratio) as avg_sharpe,
+                    MAX(capital_final) as max_capital
+                FROM runs
+                WHERE dataset = 'valid' AND total_trades >= 15
+                  AND strategy = 'vwap_pullback'
+                  AND json_extract(params_json, '$.{param_name}') IS NOT NULL
+                GROUP BY param_val
+                HAVING n >= 3
+                ORDER BY avg_capital DESC
+            """)
+            rows = [dict(r) for r in cur.fetchall()]
+            if rows:
+                param_sensitivity[param_name] = rows
+
+        # 7. Mismo análisis para breakout
+        breakout_sensitivity = {}
+        for param_name in ["lookback", "sl_atr_mult", "trail_atr_mult",
+                           "vol_ratio_min", "adx_filter"]:
+            cur.execute(f"""
+                SELECT
+                    ROUND(CAST(json_extract(params_json, '$.{param_name}') AS REAL), 1) as param_val,
+                    COUNT(*) as n,
+                    AVG(capital_final) as avg_capital,
+                    AVG(sharpe_ratio) as avg_sharpe,
+                    MAX(capital_final) as max_capital
+                FROM runs
+                WHERE dataset = 'valid' AND total_trades >= 15
+                  AND strategy = 'breakout'
+                  AND json_extract(params_json, '$.{param_name}') IS NOT NULL
+                GROUP BY param_val
+                HAVING n >= 3
+                ORDER BY avg_capital DESC
+            """)
+            rows = [dict(r) for r in cur.fetchall()]
+            if rows:
+                breakout_sensitivity[param_name] = rows
+
+        # 8. Win rate distribution
+        cur.execute("""
+            SELECT
+                CASE
+                    WHEN win_rate < 30 THEN '<30%'
+                    WHEN win_rate < 40 THEN '30-40%'
+                    WHEN win_rate < 50 THEN '40-50%'
+                    WHEN win_rate < 60 THEN '50-60%'
+                    WHEN win_rate < 70 THEN '60-70%'
+                    ELSE '70%+'
+                END as wr_bucket,
+                COUNT(*) as n,
+                AVG(capital_final) as avg_capital,
+                AVG(sharpe_ratio) as avg_sharpe
+            FROM runs
+            WHERE dataset = 'valid' AND total_trades >= 15
+            GROUP BY wr_bucket
+            ORDER BY wr_bucket
+        """)
+        wr_dist = [dict(r) for r in cur.fetchall()]
+
+        conn.close()
+
+        return {
+            "by_strategy": by_strategy,
+            "train_valid_correlation": train_valid_corr,
+            "top30": top30,
+            "bottom30": bottom30,
+            "by_week": by_week,
+            "vwap_param_sensitivity": param_sensitivity,
+            "breakout_param_sensitivity": breakout_sensitivity,
+            "win_rate_distribution": wr_dist,
+        }
+    except Exception as e:
+        import traceback
+        raise HTTPException(500, f"{e}\n{traceback.format_exc()}")
+
+
 @app.get("/metrics/system")
 def metrics_system():
     """Estadísticas generales del sistema — tamaños de DB, conteos."""

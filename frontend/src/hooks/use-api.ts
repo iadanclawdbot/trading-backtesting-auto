@@ -96,7 +96,7 @@ export function useSystemMetrics() {
 }
 
 // Velas OHLCV de backtesting: cada 5 min (datos estáticos)
-export function useCandles(timeframe: string = "4h", dataset: string = "valid", limit: number = 500) {
+export function useCandles(timeframe: string = "4h", dataset: string = "valid", limit: number = 3000) {
   return useSWR<CandlesResponse>(
     `/metrics/candles?timeframe=${timeframe}&dataset=${dataset}&limit=${limit}`,
     fetcher,

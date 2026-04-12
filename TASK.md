@@ -121,8 +121,8 @@ Hacer en orden. Bloquean todo lo demás.
 
 **Pendiente frontend:**
 - [x] Redeploy backend en Coolify para activar /metrics/* endpoints ✅ 2026-04-12
-- [ ] Animaciones con Motion (entrada staggered, números animados)
-- [ ] Candlestick chart con lightweight-charts (requiere datos OHLCV)
+- [x] Animaciones con Motion — StaggerSection, StaggerGrid, AnimatedNumber ✅ 2026-04-12
+- [x] Candlestick chart con lightweight-charts v5 — BTC/USD OHLC via CoinGecko ✅ 2026-04-12
 
 ---
 

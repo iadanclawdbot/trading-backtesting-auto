@@ -17,8 +17,10 @@ import { ChampionTimeline } from "@/components/dashboard/champion-timeline";
 import { CyclesChart } from "@/components/dashboard/cycles-chart";
 import { SystemStats } from "@/components/dashboard/system-stats";
 import { MarketContext } from "@/components/dashboard/market-context";
+import { CandlestickChart } from "@/components/dashboard/candlestick-chart";
 import { Header } from "@/components/layout/header";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { StaggerSection, StaggerGrid, StaggerItem, AnimatedNumber } from "@/components/motion";
 import { BENCHMARK_FITNESS } from "@/lib/constants";
 import { formatCurrency, formatPercent, formatSharpe, formatNumber, timeAgo } from "@/lib/formatters";
 import { getStrategy } from "@/lib/constants";
@@ -59,68 +61,68 @@ function KPIRow() {
 
   return (
     <>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-        <div className="mcard">
+      <StaggerGrid className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2" stagger={0.04}>
+        <StaggerItem className="mcard">
           <div className="lbl">Fitness score</div>
-          <div className="val">{best ? formatSharpe(best.sharpe_ratio) : "—"}</div>
+          <div className="val"><AnimatedNumber value={best?.sharpe_ratio} format="sharpe" /></div>
           <div className={`sub ${beats ? "up" : ""}`}>
             {beats ? `↑ +${(best!.sharpe_ratio - BENCHMARK_FITNESS).toFixed(3)} vs benchmark` : "bajo benchmark"}
           </div>
-        </div>
-        <div className="mcard">
+        </StaggerItem>
+        <StaggerItem className="mcard">
           <div className="lbl">Sharpe OOS</div>
-          <div className="val">{best ? formatSharpe(best.sharpe_ratio) : "—"}</div>
+          <div className="val"><AnimatedNumber value={best?.sharpe_ratio} format="sharpe" /></div>
           <div className="sub warn">
             Train: {bestResult ? formatSharpe(bestResult.sharpe_train) : "—"}
           </div>
-        </div>
-        <div className="mcard">
+        </StaggerItem>
+        <StaggerItem className="mcard">
           <div className="lbl">Win rate</div>
-          <div className="val">{best ? formatPercent(best.win_rate, false) : "—"}</div>
+          <div className="val"><AnimatedNumber value={best?.win_rate} format="percent" /></div>
           <div className="sub">{best ? `${best.total_trades} trades` : ""}</div>
-        </div>
-        <div className="mcard">
+        </StaggerItem>
+        <StaggerItem className="mcard">
           <div className="lbl">Max drawdown</div>
-          <div className="val dn">{best ? formatPercent(best.max_drawdown) : "—"}</div>
+          <div className="val dn"><AnimatedNumber value={best?.max_drawdown} format="percent" /></div>
           <div className="sub">capital: {champion ? formatCurrency(champion.capital_final) : "—"}</div>
-        </div>
-        <div className="mcard">
+        </StaggerItem>
+        <StaggerItem className="mcard">
           <div className="lbl">Beat benchmark</div>
           <div className={`val ${beats ? "up" : "dn"}`}>{beats ? "Sí" : "No"}</div>
           <div className="sub">vs {BENCHMARK_FITNESS} target</div>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-        <div className="mcard">
+        </StaggerItem>
+      </StaggerGrid>
+      <StaggerGrid className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2" baseDelay={0.15} stagger={0.04}>
+        <StaggerItem className="mcard">
           <div className="lbl">PnL total</div>
           <div className={`val ${champion && champion.pnl_pct >= 0 ? "up" : "dn"}`}>
-            {champion ? formatPercent(champion.pnl_pct) : "—"}
+            <AnimatedNumber value={champion?.pnl_pct} format="percent" />
           </div>
           <div className="sub">{champion ? `desde $250` : ""}</div>
-        </div>
-        <div className="mcard">
+        </StaggerItem>
+        <StaggerItem className="mcard">
           <div className="lbl">Consistency ratio</div>
-          <div className="val">{consistency !== null ? consistency.toFixed(2) : "—"}</div>
+          <div className="val"><AnimatedNumber value={consistency} format="number" /></div>
           <div className="sub">{consistency !== null && consistency > 0.7 ? "sin overfitting" : "revisar"}</div>
-        </div>
-        <div className="mcard">
+        </StaggerItem>
+        <StaggerItem className="mcard">
           <div className="lbl">Capital final</div>
-          <div className="val up">{champion ? formatCurrency(champion.capital_final) : "—"}</div>
+          <div className="val up"><AnimatedNumber value={champion?.capital_final} format="currency" /></div>
           <div className={`sub ${champion && champion.pnl_pct >= 0 ? "up" : ""}`}>
             {champion ? `${formatPercent(champion.pnl_pct)} desde $250` : ""}
           </div>
-        </div>
-        <div className="mcard">
+        </StaggerItem>
+        <StaggerItem className="mcard">
           <div className="lbl">Experimentos done</div>
-          <div className="val up">{formatNumber(done)}</div>
+          <div className="val up"><AnimatedNumber value={done} /></div>
           <div className="sub dn">{failed > 0 ? `failed: ${failed}` : "0 failures"}</div>
-        </div>
-        <div className="mcard">
+        </StaggerItem>
+        <StaggerItem className="mcard">
           <div className="lbl">Tasa de éxito</div>
-          <div className="val up">{done + failed > 0 ? ((done / (done + failed)) * 100).toFixed(1) + "%" : "—"}</div>
+          <div className="val up"><AnimatedNumber value={done + failed > 0 ? (done / (done + failed)) * 100 : null} format="percent" /></div>
           <div className="sub">ratio done/total</div>
-        </div>
-      </div>
+        </StaggerItem>
+      </StaggerGrid>
     </>
   );
 }
@@ -176,94 +178,125 @@ export default function DashboardPage() {
 
       <div className="p-3 lg:px-5 lg:py-4 space-y-2">
         {/* Mobile: system health */}
-        <div className="lg:hidden animate-in">
+        <StaggerSection className="lg:hidden">
           <SystemHealth />
-        </div>
+        </StaggerSection>
 
         {/* ─── KPIs ────────────────────────────────────────── */}
         <div className="section-divider" style={{ marginTop: 0 }}>Rendimiento — campeón actual</div>
-        <div className="space-y-2 animate-in">
+        <StaggerSection delay={0.05} className="space-y-2">
           <ErrorBoundary fallbackTitle="Error cargando KPIs">
             <KPIRow />
           </ErrorBoundary>
-        </div>
+        </StaggerSection>
 
         {/* ─── Equity + Donut + Market ─────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr_1fr] gap-2 animate-in" style={{ animationDelay: "0.05s" }}>
-          <ErrorBoundary fallbackTitle="Error cargando equity curve">
-            <EquityCurve />
+        <StaggerGrid className="grid grid-cols-1 lg:grid-cols-[2fr_1fr_1fr] gap-2" baseDelay={0.15} stagger={0.08}>
+          <StaggerItem>
+            <ErrorBoundary fallbackTitle="Error cargando equity curve">
+              <EquityCurve />
+            </ErrorBoundary>
+          </StaggerItem>
+          <StaggerItem>
+            <ErrorBoundary fallbackTitle="Error cargando donut">
+              <TradesDonut />
+            </ErrorBoundary>
+          </StaggerItem>
+          <StaggerItem>
+            <ErrorBoundary fallbackTitle="Error cargando mercado">
+              <MarketContext />
+            </ErrorBoundary>
+          </StaggerItem>
+        </StaggerGrid>
+
+        {/* ─── BTC Candlestick ────────────────────────────── */}
+        <StaggerSection delay={0.2}>
+          <ErrorBoundary fallbackTitle="Error cargando candlestick">
+            <CandlestickChart />
           </ErrorBoundary>
-          <ErrorBoundary fallbackTitle="Error cargando donut">
-            <TradesDonut />
-          </ErrorBoundary>
-          <ErrorBoundary fallbackTitle="Error cargando mercado">
-            <MarketContext />
-          </ErrorBoundary>
-        </div>
+        </StaggerSection>
 
         {/* ─── Autoresearch chart ──────────────────────────── */}
         <div className="section-divider">Autoresearch progress</div>
-        <div className="animate-in" style={{ animationDelay: "0.1s" }}>
+        <StaggerSection delay={0.25}>
           <ErrorBoundary fallbackTitle="Error cargando autoresearch">
             <AutoresearchChart />
           </ErrorBoundary>
-        </div>
+        </StaggerSection>
 
         {/* ─── Ciclos + Champions/Gauge + Learnings ────────── */}
         <div className="section-divider">Ciclos y aprendizaje</div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 animate-in" style={{ animationDelay: "0.15s" }}>
-          <ErrorBoundary fallbackTitle="Error cargando ciclos">
-            <CyclesChart />
-          </ErrorBoundary>
-          <ErrorBoundary fallbackTitle="Error cargando gauge">
-            <FitnessGauge />
-          </ErrorBoundary>
-          <ErrorBoundary fallbackTitle="Error cargando learnings">
-            <LearningsBars />
-          </ErrorBoundary>
-        </div>
+        <StaggerGrid className="grid grid-cols-1 lg:grid-cols-3 gap-2" baseDelay={0.3} stagger={0.08}>
+          <StaggerItem>
+            <ErrorBoundary fallbackTitle="Error cargando ciclos">
+              <CyclesChart />
+            </ErrorBoundary>
+          </StaggerItem>
+          <StaggerItem>
+            <ErrorBoundary fallbackTitle="Error cargando gauge">
+              <FitnessGauge />
+            </ErrorBoundary>
+          </StaggerItem>
+          <StaggerItem>
+            <ErrorBoundary fallbackTitle="Error cargando learnings">
+              <LearningsBars />
+            </ErrorBoundary>
+          </StaggerItem>
+        </StaggerGrid>
 
         {/* ─── Champion history + details ──────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-2 animate-in" style={{ animationDelay: "0.17s" }}>
-          <ErrorBoundary fallbackTitle="Error cargando campeón">
-            <ChampionCard />
-          </ErrorBoundary>
-          <ErrorBoundary fallbackTitle="Error cargando historial">
-            <ChampionTimeline />
-          </ErrorBoundary>
-        </div>
+        <StaggerGrid className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-2" baseDelay={0.35} stagger={0.08}>
+          <StaggerItem>
+            <ErrorBoundary fallbackTitle="Error cargando campeón">
+              <ChampionCard />
+            </ErrorBoundary>
+          </StaggerItem>
+          <StaggerItem>
+            <ErrorBoundary fallbackTitle="Error cargando historial">
+              <ChampionTimeline />
+            </ErrorBoundary>
+          </StaggerItem>
+        </StaggerGrid>
 
         {/* ─── Runs table ──────────────────────────────────── */}
         <div className="section-divider">Top experimentos</div>
-        <div className="animate-in" style={{ animationDelay: "0.2s" }}>
+        <StaggerSection delay={0.4}>
           <ErrorBoundary fallbackTitle="Error cargando tabla">
             <RunsTable />
           </ErrorBoundary>
-        </div>
+        </StaggerSection>
 
         {/* ─── Queue + System ──────────────────────────────── */}
         <div className="section-divider">Sistema</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 animate-in" style={{ animationDelay: "0.25s" }}>
-          <ErrorBoundary fallbackTitle="Error cargando cola">
-            <QueueStatus />
-          </ErrorBoundary>
-          <ErrorBoundary fallbackTitle="Error cargando best OOS">
-            <BestOOSCard />
-          </ErrorBoundary>
-          <ErrorBoundary fallbackTitle="Error cargando infraestructura">
-            <SystemStats />
-          </ErrorBoundary>
-          <ErrorBoundary fallbackTitle="Error cargando razonamiento IA">
-            <OpusInsightsPanel />
-          </ErrorBoundary>
-        </div>
+        <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2" baseDelay={0.45} stagger={0.06}>
+          <StaggerItem>
+            <ErrorBoundary fallbackTitle="Error cargando cola">
+              <QueueStatus />
+            </ErrorBoundary>
+          </StaggerItem>
+          <StaggerItem>
+            <ErrorBoundary fallbackTitle="Error cargando best OOS">
+              <BestOOSCard />
+            </ErrorBoundary>
+          </StaggerItem>
+          <StaggerItem>
+            <ErrorBoundary fallbackTitle="Error cargando infraestructura">
+              <SystemStats />
+            </ErrorBoundary>
+          </StaggerItem>
+          <StaggerItem>
+            <ErrorBoundary fallbackTitle="Error cargando razonamiento IA">
+              <OpusInsightsPanel />
+            </ErrorBoundary>
+          </StaggerItem>
+        </StaggerGrid>
 
         {/* ─── Learnings feed (full width) ─────────────────── */}
-        <div className="animate-in" style={{ animationDelay: "0.3s" }}>
+        <StaggerSection delay={0.5}>
           <ErrorBoundary fallbackTitle="Error cargando razonamiento IA">
             <LearningsFeed />
           </ErrorBoundary>
-        </div>
+        </StaggerSection>
       </div>
     </>
   );

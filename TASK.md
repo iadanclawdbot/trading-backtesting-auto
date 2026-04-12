@@ -13,24 +13,27 @@
 | Componente                           | Estado                                        | Verificado |
 | ------------------------------------ | --------------------------------------------- | ---------- |
 | autolab-api (`/health`)              | ✅ UP — sqlite y postgresql conectados        | 2026-04-12 |
-| n8n Main Loop (30min)                | ⚪ No verificado                              | —          |
+| n8n Main Loop                        | ✅ cada 15min (hasta lunes), luego 30min      | 2026-04-12 |
 | n8n Daily Research (9am)             | ✅ Cron `0 0 9 * * *` correcto                | 2026-04-08 |
-| n8n Chat Telegram                    | ⚪ No verificado                              | —          |
+| n8n Chat Telegram                    | ✅ activo                                      | 2026-04-12 |
 | Supabase CHECK constraint            | ✅ Migración aplicada                         | 2026-04-08 |
 | GitHub repo creado                   | ✅ `iadanclawdbot/trading-backtesting-auto`   | 2026-04-07 |
-| Coolify                              | ✅ Deploy multi-moneda — commit `35ef71f`     | 2026-04-12 |
-| Frontend dashboard (Vercel)          | ✅ Coin selector global BTC/ETH/SOL, 0 contaminación cross-coin | 2026-04-12 |
-| Backend /metrics/* endpoints         | ✅ 6 endpoints: equity-curve, champion-history, cycles, system, analysis, candles | 2026-04-12 |
+| Coolify                              | ✅ Deploy final — commit `20cbda5`            | 2026-04-12 |
+| Frontend dashboard (Vercel)          | ✅ Coin selector global BTC/ETH/SOL, 0 contaminación | 2026-04-12 |
+| Backend /metrics/* endpoints         | ✅ 6 endpoints + admin + auth X-API-Key       | 2026-04-12 |
 | Fixes estancamiento (RCA-1 a RCA-7)  | ✅ 7 RCAs resueltos — 6 estrategias habilitadas | 2026-04-12 |
 | Opus Insights                        | ✅ 17 insights publicados — plan mensual completo | 2026-04-12 |
-| Multi-moneda                         | ✅ BTCUSDT + ETHUSDT + SOLUSDT — velas 4h/1h descargadas | 2026-04-12 |
-| Ciclo autónomo                       | 🔄 Multi-coin + 6 estrategias + staleness detection | 2026-04-12 |
-| Skill /update                        | ✅ .claude/skills/update/SKILL.md creado       | 2026-04-12 |
-| ema_crossover motor                  | ✅ Upgradeado a ATR trailing (v2)              | 2026-04-12 |
+| Multi-moneda                         | ✅ BTC + ETH + SOL — campeón independiente por coin | 2026-04-12 |
+| API auth (X-API-Key)                 | ✅ 12 POST endpoints + 3 workflows n8n         | 2026-04-12 |
+| n8n workflows exportados             | ✅ 3 workflows actualizados en backend/n8n/    | 2026-04-12 |
+| Ciclo autónomo                       | 🔄 Multi-coin cada 15min — generando experiments | 2026-04-12 |
 
-**Campeón actual** (al 2026-04-12, sin cambio desde 2026-03-28):
-`vwap_pullback` | Capital: $338.30 (+35.3%) | Sharpe OOS: 1.593 | Trades: 19
-**Runs totales:** 17,561 | **Experiments:** 8,812 | **Trades:** 423,661
+**Campeones actuales** (al 2026-04-12 ~20:00):
+- **BTC**: `vwap_pullback` | $338.30 | Sharpe 1.593 | 19 trades
+- **ETH**: `breakout` | **$360.04** | Sharpe 1.632 | 18 trades
+- **SOL**: `vwap_pullback` | $344.14 | Sharpe **1.827** | 16 trades
+
+**Stats:** 17,812 runs | 428,063 trades | DB 6.7 GB | 11 estrategias testeadas
 **Velas:** BTC 4h/1h + ETH 4h/1h + SOL 4h/1h (~75K velas totales)
 
 ---

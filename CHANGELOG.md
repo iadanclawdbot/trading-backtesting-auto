@@ -102,26 +102,46 @@ El campeón `vwap_pullback` ($338.30) llevaba 15 días sin ser superado (desde 2
 - API: 0 contaminación cross-coin en todos los endpoints ✅
 - Consola: 0 errores ✅
 
-**25 commits en esta sesión:**
-`0319b4e` → `2becca2`
+**API Authentication + n8n export** (commits `a94c666`, `fb7d563`, `20cbda5`):
+- `AUTOLAB_API_KEY` env var + `verify_api_key` dependency en FastAPI
+- 12 POST endpoints protegidos (backward compat: si no hay key, no bloquea)
+- 3 workflows n8n actualizados con header `X-API-Key: {{$env.AUTOLAB_API_KEY}}`
+- Workflows exportados a `backend/n8n/` (3 archivos JSON)
+- Fix crítico: `get_context()` llamado internamente desde `/analyze` y `/chat`
+  rompía porque `Query("BTCUSDT")` no funciona como default en llamadas Python
+
+**Loop autónomo multi-coin activado:**
+- Main Loop cambiado de cada 23h (bug) → 5min → **15min** (acordado hasta lunes)
+- 3 monedas corriendo en paralelo, cada una con campeón independiente
+- Nuevos campeones coronados automáticamente:
+  - **ETH**: `breakout` $360.04 Sharpe 1.632 🏆 (supera a BTC!)
+  - **SOL**: `vwap_pullback` $344.14 Sharpe 1.827 🏆
+
+**32 commits totales en esta sesión:**
+`0319b4e` → `20cbda5`
 
 ### Pendiente al cierre
-- [ ] 24-48h: confirmar diversidad en experiments y multi-coin en learnings
-- [ ] Re-exportar workflows n8n
-- [ ] Autenticación en la API (X-API-Key)
+- [ ] Agregar `AUTOLAB_API_KEY=qUTAd3cwdHD88x-MrBlsBHLILoJkFdZe9IptyXY-eQ4`
+  en Coolify (backend) y n8n (env vars) para activar la auth
+- [ ] Cambiar Main Loop de 15min a 30min desde el lunes (steady state)
+- [ ] 24-48h: monitorear nuevos campeones multi-coin
 
 ### Estado del sistema al cierre
 | Componente | Estado |
 |------------|--------|
-| AutoLab API | ✅ UP — commit `2becca2` deployado |
+| AutoLab API | ✅ UP — commit `20cbda5` deployado |
 | GitHub repo | ✅ main al día — tag `pre-multicoin-backup` disponible |
-| Coolify | ✅ Multi-moneda + per-symbol champion + 0 contaminación |
-| Vercel | ✅ Coin selector BTC/ETH/SOL verificado con Playwright |
+| Coolify | ✅ Multi-moneda + auth + fix SQL |
+| Vercel | ✅ Coin selector BTC/ETH/SOL + 0 contaminación verificada Playwright |
 | Opus Insights | ✅ 17 insights publicados — plan mensual 4 semanas |
-| Champion (BTC) | `vwap_pullback` — $338.30 (+35.3%) — Sharpe 1.593 |
-| Champion (ETH) | Sin campeón — pendiente primeros experiments |
-| Champion (SOL) | Sin campeón — pendiente primeros experiments |
-| Estrategias | 6: breakout, vwap_pullback, mean_reversion, ema_crossover v2, breakdown_short, retest |
+| Champion (BTC) | `vwap_pullback` — $338.30 — Sharpe 1.593 |
+| Champion (ETH) | `breakout` — **$360.04** — Sharpe 1.632 🏆 |
+| Champion (SOL) | `vwap_pullback` — $344.14 — Sharpe **1.827** 🏆 |
+| Estrategias | 11 testeadas, 6 habilitadas en loop autónomo |
+| Loop autónomo | ✅ 15min hasta lunes, 30min steady state |
+| API auth | ✅ Código listo, pendiente agregar env var en Coolify/n8n |
+| n8n workflows | ✅ 3 exportados a backend/n8n/ |
+| Runs totales | 17,812 / 428,063 trades / 8,862 experiments / DB 6.7GB |
 | Multi-moneda | ✅ BTC + ETH + SOL — velas 4h/1h + coin selector + aislamiento verificado |
 | Ciclo autónomo | 🔄 Multi-coin + 6 estrategias + staleness detection |
 | Runs totales | 17,561 runs / 8,812 experiments / 423k trades / ~75K velas |

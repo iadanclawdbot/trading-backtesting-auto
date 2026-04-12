@@ -76,8 +76,26 @@ El campeón `vwap_pullback` ($338.30) llevaba 15 días sin ser superado (desde 2
 - `ExperimentConfig.symbol`, dedup incluye symbol, prompts LLM multi-coin
 - `/context` devuelve `r.symbol` para que el LLM vea la moneda
 
-**15 commits en esta sesión:**
-`0319b4e` → `2484f6d` (fix estancamiento → multi-moneda)
+**Dashboard coin selector global** (commits `418fa77`→`35ef71f`):
+- CoinContext + CoinProvider + useCoin() — estado global de moneda seleccionada
+- Topbar desktop: selector `[BTC|ETH|SOL]` con colores de marca
+- Header mobile: mismo selector compacto
+- 5 hooks filtrados por coin (useStatus, useApiContext, useEquityCurve, useChampionHistory, useCandles)
+- SWR_COIN (keepPreviousData:false) vs SWR_GLOBAL (keepPreviousData:true) — evita contaminación
+- /admin/fix-legacy-symbols: 100 runs con symbol='ETHUSDT' corregidos a BTCUSDT (datos legacy)
+- AnimatedNumber: early return "—" para null (evita números stale)
+- Página /insights rediseñada: vista completa con expand all
+
+**Testing cross-coin completado:**
+- BTC desktop: datos correctos ✅
+- ETH desktop: KPIs "—", equity "sin campeón", candlestick ETH ✅
+- SOL desktop: KPIs "—", equity "sin campeón", candlestick SOL ✅
+- BTC→ETH→SOL→BTC: datos se restauran sin residuos ✅
+- ETH mobile: header selector, KPIs "—", layout correcto ✅
+- 0 errores de consola ✅
+
+**20 commits en esta sesión:**
+`0319b4e` → `35ef71f`
 
 ### Pendiente al cierre
 - [ ] 24-48h: confirmar diversidad en experiments y multi-coin en learnings
@@ -88,16 +106,18 @@ El campeón `vwap_pullback` ($338.30) llevaba 15 días sin ser superado (desde 2
 ### Estado del sistema al cierre
 | Componente | Estado |
 |------------|--------|
-| AutoLab API | ✅ UP — commit `2484f6d` deployado |
+| AutoLab API | ✅ UP — commit `35ef71f` deployado |
 | GitHub repo | ✅ main al día — tag `pre-multicoin-backup` disponible |
-| Coolify | ✅ Deploy exitoso, healthcheck OK |
-| Vercel | ✅ Frontend con Motion + candlestick + multi-coin selector |
+| Coolify | ✅ Deploy multi-moneda + fix contaminación |
+| Vercel | ✅ Coin selector BTC/ETH/SOL, 0 contaminación cross-coin verificada |
 | Opus Insights | ✅ 17 insights publicados — plan mensual 4 semanas |
-| Champion | `vwap_pullback` — $338.30 (+35.3%) — Sharpe 1.593 (15 días sin cambio) |
+| Champion (BTC) | `vwap_pullback` — $338.30 (+35.3%) — Sharpe 1.593 (15 días sin cambio) |
+| Champion (ETH) | Sin campeón — pendiente primeros experiments |
+| Champion (SOL) | Sin campeón — pendiente primeros experiments |
 | Estrategias | 6: breakout, vwap_pullback, mean_reversion, ema_crossover v2, breakdown_short, retest |
-| Multi-moneda | ✅ BTC + ETH + SOL — velas 4h/1h descargadas (~75K velas) |
-| Ciclo autónomo | 🔄 Multi-coin + 6 estrategias + staleness detection activo |
-| Runs totales | 17,561 runs / 8,812 experiments / 423k trades |
+| Multi-moneda | ✅ BTC + ETH + SOL — velas 4h/1h + coin selector + aislamiento verificado |
+| Ciclo autónomo | 🔄 Multi-coin + 6 estrategias + staleness detection |
+| Runs totales | 17,561 runs / 8,812 experiments / 423k trades / ~75K velas |
 
 ---
 

@@ -18,8 +18,8 @@
 | n8n Chat Telegram                    | ⚪ No verificado                              | —          |
 | Supabase CHECK constraint            | ✅ Migración aplicada                         | 2026-04-08 |
 | GitHub repo creado                   | ✅ `iadanclawdbot/trading-backtesting-auto`   | 2026-04-07 |
-| Coolify                              | ✅ Deploy multi-moneda — commit `2484f6d`     | 2026-04-12 |
-| Frontend dashboard (Vercel)          | ✅ 19 componentes, 2 páginas, Motion + candlestick | 2026-04-12 |
+| Coolify                              | ✅ Deploy multi-moneda — commit `35ef71f`     | 2026-04-12 |
+| Frontend dashboard (Vercel)          | ✅ Coin selector global BTC/ETH/SOL, 0 contaminación cross-coin | 2026-04-12 |
 | Backend /metrics/* endpoints         | ✅ 6 endpoints: equity-curve, champion-history, cycles, system, analysis, candles | 2026-04-12 |
 | Fixes estancamiento (RCA-1 a RCA-7)  | ✅ 7 RCAs resueltos — 6 estrategias habilitadas | 2026-04-12 |
 | Opus Insights                        | ✅ 17 insights publicados — plan mensual completo | 2026-04-12 |
@@ -148,8 +148,16 @@ Hacer en orden. Bloquean todo lo demás.
   - ACTIVE_SYMBOLS = [BTCUSDT, ETHUSDT, SOLUSDT]
   - Velas descargadas: ETH 4h (4,740) + 1h (19,441) + SOL 4h (4,861) + 1h (19,441)
   - API: symbol en ExperimentConfig, /hypothesize, /context, dedup
-  - Dashboard: selector BTC/ETH/SOL en candlestick, badge en RunsTable
   - POST /admin/download-candles para descargar nuevas monedas
+- [x] **Dashboard coin selector global** — BTC/ETH/SOL en Topbar + Header mobile (commit `418fa77`) ✅ 2026-04-12
+  - CoinContext + CoinProvider + useCoin()
+  - 5 hooks filtrados por coin: useStatus, useApiContext, useEquityCurve, useChampionHistory, useCandles
+  - keepPreviousData:false en hooks per-coin para evitar contaminación
+- [x] **Fix contaminación cross-coin** (commits `834b322`, `35ef71f`) ✅ 2026-04-12
+  - 100 runs legacy con symbol='ETHUSDT' corregidos a BTCUSDT
+  - SWR_COIN (keepPreviousData:false) vs SWR_GLOBAL (keepPreviousData:true)
+  - AnimatedNumber: early return "—" para null
+  - Testeado desktop+mobile: BTC→ETH→SOL→BTC — 0 contaminación
 - [ ] **Campeón por moneda** (Fase 5) — ALTER TABLE champions ADD symbol, comparar dentro del mismo symbol
 
 ---
@@ -183,7 +191,7 @@ Hacer en orden. Bloquean todo lo demás.
 - [x] Análisis profundo DB: sensibilidad params, overfitting, distribuciones (2026-04-12)
 - [x] Motion animations + candlestick chart lightweight-charts (2026-04-12)
 - [x] Eliminar /learnings, rediseñar Opus panel, quitar logo TV (2026-04-12)
-- [x] Multi-moneda: ETH + SOL habilitados, velas descargadas (2026-04-12) — commit `2484f6d`
+- [x] Multi-moneda + coin selector + fix contaminación (2026-04-12) — commits `2484f6d`→`35ef71f`
 
 ---
 

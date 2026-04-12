@@ -5,10 +5,10 @@
 
 ---
 
-## 2026-04-12 — Fix estancamiento + Opus Analyst + 6 estrategias nuevas
+## 2026-04-12 — Sesión mayor: estancamiento, análisis profundo, multi-moneda, frontend
 
 ### Contexto
-El campeón `vwap_pullback` ($338.30) llevaba 15 días sin ser superado (desde 2026-03-28). Análisis reveló 0/20 ciclos beat benchmark, 49/50 resultados en `/context` eran vwap_pullback, ghost params en datos históricos, y 6 de 9 estrategias del motor completamente sin usar.
+El campeón `vwap_pullback` ($338.30) llevaba 15 días sin ser superado (desde 2026-03-28). Análisis reveló 0/20 ciclos beat benchmark, 49/50 resultados en `/context` eran vwap_pullback, ghost params en datos históricos, y 6 de 9 estrategias del motor completamente sin usar. Sesión extensa que cubrió backend, análisis de datos, frontend y expansión multi-moneda.
 
 ### Completado
 
@@ -61,26 +61,43 @@ El campeón `vwap_pullback` ($338.30) llevaba 15 días sin ser superado (desde 2
 - Skill `/update` creada en `.claude/skills/update/SKILL.md`
 - 17 Opus insights publicados (6 iniciales + 7 plan mensual + 4 análisis profundo)
 
+**Frontend** (commits `a3145cb`, `d31d38f`, `01b3ffa`, `2484f6d`):
+- Motion animations: StaggerSection, StaggerGrid, AnimatedNumber (KPIs count up)
+- Candlestick chart: lightweight-charts v5 con velas de la DB + trades del campeón como markers
+- Selector multi-moneda BTC/ETH/SOL en candlestick + badge en RunsTable
+- Opus Insights panel rediseñado: pills de tipo/prioridad, expandible al click
+- Logo TradingView eliminado
+- Página /learnings eliminada (redundante con Overview)
+
+**Multi-moneda** (commit `2484f6d`):
+- `ACTIVE_SYMBOLS = [BTCUSDT, ETHUSDT, SOLUSDT]`
+- `POST /admin/download-candles` — descarga velas desde Binance Vision al servidor
+- Velas descargadas: ETH 4h (4,740) + 1h (19,441) + SOL 4h (4,861) + 1h (19,441)
+- `ExperimentConfig.symbol`, dedup incluye symbol, prompts LLM multi-coin
+- `/context` devuelve `r.symbol` para que el LLM vea la moneda
+
+**15 commits en esta sesión:**
+`0319b4e` → `2484f6d` (fix estancamiento → multi-moneda)
+
 ### Pendiente al cierre
-- [ ] Verificar redeploy exitoso en Coolify
-- [ ] 24-48h después: confirmar diversidad en experiments nuevos
-- [ ] Animaciones con Motion (frontend)
-- [ ] Candlestick chart con lightweight-charts
+- [ ] 24-48h: confirmar diversidad en experiments y multi-coin en learnings
+- [ ] Campeón por moneda (Fase 5) — champion per symbol
 - [ ] Re-exportar workflows n8n
 - [ ] Autenticación en la API (X-API-Key)
 
 ### Estado del sistema al cierre
 | Componente | Estado |
 |------------|--------|
-| AutoLab API | ✅ UP — pendiente redeploy con cambios de hoy |
-| GitHub repo | ✅ main al día |
-| Coolify | ⏳ Redeploy en proceso |
+| AutoLab API | ✅ UP — commit `2484f6d` deployado |
+| GitHub repo | ✅ main al día — tag `pre-multicoin-backup` disponible |
+| Coolify | ✅ Deploy exitoso, healthcheck OK |
+| Vercel | ✅ Frontend con Motion + candlestick + multi-coin selector |
 | Opus Insights | ✅ 17 insights publicados — plan mensual 4 semanas |
 | Champion | `vwap_pullback` — $338.30 (+35.3%) — Sharpe 1.593 (15 días sin cambio) |
-| Estrategias habilitadas | 6 (antes 3): +ema_crossover (ATR trailing v2), +breakdown_short, +retest |
-| ema_crossover | ✅ Upgradeado a ATR trailing (antes SL/TP fijo) |
-| Ciclo autónomo | 🔄 Pendiente redeploy — diversidad forzada + 6 estrategias + staleness detection |
-| Runs totales | 17,561 runs / 8,812 experiments / 423k trades / DB 6.6 GB |
+| Estrategias | 6: breakout, vwap_pullback, mean_reversion, ema_crossover v2, breakdown_short, retest |
+| Multi-moneda | ✅ BTC + ETH + SOL — velas 4h/1h descargadas (~75K velas) |
+| Ciclo autónomo | 🔄 Multi-coin + 6 estrategias + staleness detection activo |
+| Runs totales | 17,561 runs / 8,812 experiments / 423k trades |
 
 ---
 

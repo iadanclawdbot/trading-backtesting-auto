@@ -32,7 +32,7 @@ You're working inside the **WAT framework** (Workflows, Agents, Tools). This arc
 
 ## What This Project Does
 
-AutoLab es un sistema de mejora continua autónoma de estrategias de trading BTC/USDT. Corre 24/7 en producción sin intervención humana. Cada 30 minutos ejecuta un ciclo:
+AutoLab es un sistema de mejora continua autónoma de estrategias de trading multi-coin (BTC/USDT, ETH/USDT, SOL/USDT). Corre 24/7 en producción sin intervención humana. Cada 30 minutos ejecuta un ciclo:
 
 ```
 POST /analyze → POST /hypothesize → POST /run-pipeline → POST /learn → Telegram
@@ -86,9 +86,9 @@ trading-backtesting-auto/
 │   └── skills/                 ← skill_opus_analyst.md — análisis estratégico profundo
 │
 ├── frontend/                   ← Dashboard Next.js 16 (Vercel deploy)
-│   ├── src/app/                ← Rutas: / /learnings /insights
-│   ├── src/components/         ← layout/ + dashboard/ (18 componentes)
-│   ├── src/hooks/use-api.ts    ← SWR hooks para 9 endpoints
+│   ├── src/app/                ← Rutas: / /insights (2 páginas)
+│   ├── src/components/         ← layout/ + dashboard/ (19 componentes) + motion.tsx
+│   ├── src/hooks/use-api.ts    ← SWR hooks para 11 endpoints
 │   ├── src/lib/                ← api.ts, constants.ts, formatters.ts
 │   └── src/types/api.ts        ← Interfaces TS verificadas contra API real
 │

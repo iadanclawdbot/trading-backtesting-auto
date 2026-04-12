@@ -18,18 +18,20 @@
 | n8n Chat Telegram                    | ⚪ No verificado                              | —          |
 | Supabase CHECK constraint            | ✅ Migración aplicada                         | 2026-04-08 |
 | GitHub repo creado                   | ✅ `iadanclawdbot/trading-backtesting-auto`   | 2026-04-07 |
-| Coolify apuntando a este repo        | ✅ Redeploy con 6 estrategias nuevas          | 2026-04-12 |
-| Frontend dashboard (Vercel)          | ✅ 18 componentes, 9 endpoints, 3 páginas     | 2026-04-08 |
-| Backend /metrics/* endpoints         | ✅ 4 endpoints activos en producción           | 2026-04-12 |
+| Coolify                              | ✅ Deploy multi-moneda — commit `2484f6d`     | 2026-04-12 |
+| Frontend dashboard (Vercel)          | ✅ 19 componentes, 2 páginas, Motion + candlestick | 2026-04-12 |
+| Backend /metrics/* endpoints         | ✅ 6 endpoints: equity-curve, champion-history, cycles, system, analysis, candles | 2026-04-12 |
 | Fixes estancamiento (RCA-1 a RCA-7)  | ✅ 7 RCAs resueltos — 6 estrategias habilitadas | 2026-04-12 |
 | Opus Insights                        | ✅ 17 insights publicados — plan mensual completo | 2026-04-12 |
-| Ciclo autónomo                       | 🔄 Redeploy con 6 estrategias + staleness detection | 2026-04-12 |
+| Multi-moneda                         | ✅ BTCUSDT + ETHUSDT + SOLUSDT — velas 4h/1h descargadas | 2026-04-12 |
+| Ciclo autónomo                       | 🔄 Multi-coin + 6 estrategias + staleness detection | 2026-04-12 |
 | Skill /update                        | ✅ .claude/skills/update/SKILL.md creado       | 2026-04-12 |
-| Endpoint /metrics/analysis           | ✅ Analytics profundo sobre la DB              | 2026-04-12 |
+| ema_crossover motor                  | ✅ Upgradeado a ATR trailing (v2)              | 2026-04-12 |
 
 **Campeón actual** (al 2026-04-12, sin cambio desde 2026-03-28):
 `vwap_pullback` | Capital: $338.30 (+35.3%) | Sharpe OOS: 1.593 | Trades: 19
-**Runs totales:** 17,561 | **Experiments:** 8,812 | **Trades:** 423,661 | **DB:** 6.6 GB
+**Runs totales:** 17,561 | **Experiments:** 8,812 | **Trades:** 423,661
+**Velas:** BTC 4h/1h + ETH 4h/1h + SOL 4h/1h (~75K velas totales)
 
 ---
 
@@ -122,7 +124,11 @@ Hacer en orden. Bloquean todo lo demás.
 **Pendiente frontend:**
 - [x] Redeploy backend en Coolify para activar /metrics/* endpoints ✅ 2026-04-12
 - [x] Animaciones con Motion — StaggerSection, StaggerGrid, AnimatedNumber ✅ 2026-04-12
-- [x] Candlestick chart con lightweight-charts v5 — BTC/USD OHLC via CoinGecko ✅ 2026-04-12
+- [x] Candlestick chart con lightweight-charts v5 — velas DB + trades campeón ✅ 2026-04-12
+- [x] Quitar logo TradingView + rediseñar Opus Insights panel ✅ 2026-04-12
+- [x] Eliminar página /learnings (redundante con Overview) ✅ 2026-04-12
+- [x] Selector multi-moneda BTC/ETH/SOL en candlestick chart ✅ 2026-04-12
+- [x] Badge de moneda en RunsTable ✅ 2026-04-12
 
 ---
 
@@ -138,6 +144,13 @@ Hacer en orden. Bloquean todo lo demás.
 - [x] **Upgrade ema_crossover a ATR trailing** — nuevo motor `correr_backtest_ema_trailing` + `calcular_indicadores_ema_atr` ✅ 2026-04-12
 - [x] **Fix benchmark en generar_batch_report.py** — actualizado a vwap_pullback campeón ✅ 2026-04-12
 - [ ] **Verificar 24-48h post-deploy** — confirmar diversidad en experiments y learnings nuevos
+- [x] **Backtesting multi-moneda** — ETH + SOL habilitados (commit `2484f6d`) ✅ 2026-04-12
+  - ACTIVE_SYMBOLS = [BTCUSDT, ETHUSDT, SOLUSDT]
+  - Velas descargadas: ETH 4h (4,740) + 1h (19,441) + SOL 4h (4,861) + 1h (19,441)
+  - API: symbol en ExperimentConfig, /hypothesize, /context, dedup
+  - Dashboard: selector BTC/ETH/SOL en candlestick, badge en RunsTable
+  - POST /admin/download-candles para descargar nuevas monedas
+- [ ] **Campeón por moneda** (Fase 5) — ALTER TABLE champions ADD symbol, comparar dentro del mismo symbol
 
 ---
 
@@ -165,10 +178,12 @@ Hacer en orden. Bloquean todo lo demás.
 - [x] Repo `iadanclawdbot/trading-backtesting-auto` creado y pusheado en GitHub (2026-04-07)
 - [x] Todos los archivos del repo actualizados para reflejar nueva estructura (2026-04-07)
 - [x] Fix estancamiento RCA-4 a RCA-7 (2026-04-12) — commit `0319b4e`
-- [x] Opus Analyst: 17 insights + plan mensual + 6 estrategias (2026-04-12) — commits `d9b8b62`, `aaf081e`
-- [x] Fix ghost params ema_crossover (2026-04-12) — commit `37bf1f7`
+- [x] Opus Analyst: 17 insights + plan mensual + 6 estrategias (2026-04-12)
+- [x] Fix ghost params ema_crossover + upgrade ATR trailing (2026-04-12)
 - [x] Análisis profundo DB: sensibilidad params, overfitting, distribuciones (2026-04-12)
-- [x] Skill /update + limpieza artefactos testing (2026-04-12) — commit `62096ff`
+- [x] Motion animations + candlestick chart lightweight-charts (2026-04-12)
+- [x] Eliminar /learnings, rediseñar Opus panel, quitar logo TV (2026-04-12)
+- [x] Multi-moneda: ETH + SOL habilitados, velas descargadas (2026-04-12) — commit `2484f6d`
 
 ---
 

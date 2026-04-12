@@ -227,7 +227,7 @@ def get_status(symbol: str = Query("BTCUSDT")):
 def get_context(
     top_n: int = Query(20, description="Top N resultados históricos"),
     last_cycle_batch: Optional[str] = Query(None, description="batch_id del ciclo anterior"),
-    symbol: str = Query("BTCUSDT", description="Filtrar por símbolo"),
+    symbol: str = "BTCUSDT",
 ):
     """
     Contexto completo para el brain LLM.

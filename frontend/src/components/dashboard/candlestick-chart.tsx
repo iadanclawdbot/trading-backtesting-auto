@@ -16,6 +16,8 @@ import { TooltipHelp } from "./tooltip-help";
 
 type TF = "4h" | "1h";
 type DS = "train" | "valid";
+type COIN = "BTCUSDT" | "ETHUSDT" | "SOLUSDT";
+const COINS: COIN[] = ["BTCUSDT", "ETHUSDT", "SOLUSDT"];
 
 export function CandlestickChart() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -25,8 +27,9 @@ export function CandlestickChart() {
   const markersRef = useRef<any>(null);
   const [timeframe, setTimeframe] = useState<TF>("4h");
   const [dataset, setDataset] = useState<DS>("valid");
+  const [coin, setCoin] = useState<COIN>("BTCUSDT");
 
-  const { data, isLoading } = useCandles(timeframe, dataset, 750);
+  const { data, isLoading } = useCandles(timeframe, dataset, 3000, coin);
 
   // Create chart once
   useEffect(() => {
@@ -148,7 +151,7 @@ export function CandlestickChart() {
     <div className="panel">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
-          <span className="lbl">BTC/USDT — Backtest candles</span>
+          <span className="lbl">{coin.replace("USDT", "")}/USDT — Backtest candles</span>
           <TooltipHelp
             term="Candles"
             text="Velas OHLCV reales de la DB de backtesting. Las flechas marcan entradas (verde) y salidas (verde=WIN, rojo=LOSS) del campeon actual."
@@ -164,7 +167,21 @@ export function CandlestickChart() {
             </span>
           )}
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1 items-center">
+          {COINS.map((c) => (
+            <button
+              key={c}
+              onClick={() => setCoin(c)}
+              className={`px-2 py-0.5 text-[10px] num rounded transition-colors ${
+                coin === c
+                  ? "bg-[var(--color-green-dim)] text-[var(--color-green)] border border-[rgba(74,222,128,0.2)]"
+                  : "text-[var(--color-text-2)] hover:text-[var(--color-text-1)]"
+              }`}
+            >
+              {c.replace("USDT", "")}
+            </button>
+          ))}
+          <span className="text-[var(--color-text-2)] text-[10px] mx-0.5">|</span>
           {(["valid", "train"] as DS[]).map((d) => (
             <button
               key={d}

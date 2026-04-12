@@ -50,6 +50,7 @@ export interface StatusResponse {
 // GET /context?top_n=N
 export interface TopResult {
   strategy: string;
+  symbol?: string;
   params_json: string; // JSON string — parsear al mostrar
   sharpe_oos: number;
   trades_oos: number;

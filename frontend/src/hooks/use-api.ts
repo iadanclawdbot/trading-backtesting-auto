@@ -96,9 +96,9 @@ export function useSystemMetrics() {
 }
 
 // Velas OHLCV de backtesting: cada 5 min (datos estáticos)
-export function useCandles(timeframe: string = "4h", dataset: string = "valid", limit: number = 3000) {
+export function useCandles(timeframe: string = "4h", dataset: string = "valid", limit: number = 3000, symbol: string = "BTCUSDT") {
   return useSWR<CandlesResponse>(
-    `/metrics/candles?timeframe=${timeframe}&dataset=${dataset}&limit=${limit}`,
+    `/metrics/candles?timeframe=${timeframe}&dataset=${dataset}&limit=${limit}&symbol=${symbol}`,
     fetcher,
     { ...SWR_BASE, refreshInterval: 300_000 }
   );

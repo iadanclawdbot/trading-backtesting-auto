@@ -118,6 +118,8 @@ class ExperimentConfig(BaseModel):
     notes: Optional[str] = ""
     dataset: str = "both"
     priority: int = 0
+    symbol: str = "BTCUSDT"
+    timeframe: Optional[str] = None
 
 class QueueExperimentsRequest(BaseModel):
     experiments: list[ExperimentConfig]
@@ -231,7 +233,7 @@ def get_context(
                     SELECT r.strategy, r.params_json, r.sharpe_ratio AS sharpe_oos,
                            r.total_trades AS trades_oos, r.win_rate AS wr_oos,
                            r.max_drawdown AS dd_oos, r.created_at,
-                           r.capital_final,
+                           r.capital_final, r.symbol,
                            (SELECT t.sharpe_ratio FROM runs t
                             WHERE t.experiment_id = r.experiment_id
                               AND t.dataset = 'train'
@@ -374,14 +376,16 @@ def queue_experiments(req: QueueExperimentsRequest):
                 notes = f"[{req.session_id}|cycle={req.cycle_num}] {notes}"
 
             cur.execute("""
-                INSERT INTO experiments (strategy, params_json, dataset, priority, notes, status)
-                VALUES (?, ?, ?, ?, ?, 'pending')
+                INSERT INTO experiments (strategy, params_json, dataset, priority, notes, status, symbol, timeframe)
+                VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)
             """, (
                 exp.strategy,
                 json.dumps(exp.params),
                 exp.dataset,
                 exp.priority,
                 notes,
+                exp.symbol,
+                exp.timeframe or "",
             ))
             inserted += 1
 
@@ -859,7 +863,7 @@ async def analyze():
         "\"strategies_to_prioritize\": [\"breakout\", \"vwap_pullback\", \"mean_reversion\", \"ema_crossover\", \"breakdown_short\", \"retest\"]}"
     )
     try:
-        raw = await _call_llm(prompt, "Sos un analista cuantitativo senior de backtesting BTC/USDT. Respondé SIEMPRE en JSON válido sin texto adicional.", max_tokens=2048, model=LLM_MODEL_ANALYSIS)
+        raw = await _call_llm(prompt, "Sos un analista cuantitativo senior de backtesting multi-coin (BTC, ETH, SOL). Respondé SIEMPRE en JSON válido sin texto adicional.", max_tokens=2048, model=LLM_MODEL_ANALYSIS)
         print(f"[analyze] model={LLM_MODEL_ANALYSIS} raw ({len(raw)} chars): {raw[:500]}")
         analysis = _parse_json_from_llm(raw)
     except Exception as e:
@@ -1008,8 +1012,12 @@ async def hypothesize():
         "Análisis previo:\n" + json.dumps(analysis) +
         champion_section +
         external_section +
-        "\n\nGenerá 6-10 experimentos para backtesting BTC/USDT. "
+        f"\n\nGenerá 6-10 experimentos para backtesting MULTI-COIN. "
+        f"Símbolos disponibles: {', '.join(ACTIVE_SYMBOLS)}. "
+        "Cada experimento DEBE incluir 'symbol' (ej: 'ETHUSDT'). "
+        "Incluí al menos 2 en ETHUSDT y 1 en SOLUSDT. Los demás pueden ser BTCUSDT.\n"
         "Estrategias disponibles: breakout, vwap_pullback, mean_reversion, ema_crossover, breakdown_short, retest.\n"
+        "NOTA: funding_reversion solo aplica a BTCUSDT.\n"
         "IMPORTANTE: Usá SOLO los params listados abajo. No inventés params que no estén en la lista.\n"
         "breakout params: lookback(10-40), vol_ratio_min(0.8-3.0), atr_period(10-20), "
         "sl_atr_mult(0.75-4.0), trail_atr_mult(1.5-4.0), ema_trend_period(10-50), "
@@ -1032,7 +1040,7 @@ async def hypothesize():
         "ema_trend_daily_period(15-60), adx_filter(0-35), breakeven_after_r(0=disabled, 0.5-1.5), "
         "max_retest_bars(3-10).\n"
         "Diversificá: incluí al menos 2 ema_crossover, 1-2 breakdown_short, 1 retest, y 1-2 de las demás.\n"
-        "Respondé SOLO con JSON: {experiments: [{strategy, params, notes}]}"
+        "Respondé SOLO con JSON: {experiments: [{strategy, params, notes, symbol}]}"
     )
     try:
         raw = await _call_llm(prompt, "Sos un quant que diseña experimentos de backtesting. Respondé SIEMPRE en JSON válido sin texto adicional.", temperature=0.8)
@@ -1131,11 +1139,16 @@ async def hypothesize():
             skipped_range += 1
             continue
 
-        # P1: Deduplicar — no encolar params ya testeados (sobre params limpios)
+        # Symbol validation
+        exp_symbol = exp.get("symbol", "BTCUSDT")
+        if exp_symbol not in ACTIVE_SYMBOLS:
+            exp_symbol = "BTCUSDT"
+
+        # P1: Deduplicar — incluye symbol (mismos params en ETH ≠ duplicado de BTC)
         params_normalized = json.dumps(params, sort_keys=True)
         existing = cur.execute(
-            "SELECT id FROM experiments WHERE strategy=? AND params_json=?",
-            (strategy, params_normalized)
+            "SELECT id FROM experiments WHERE strategy=? AND params_json=? AND symbol=?",
+            (strategy, params_normalized, exp_symbol)
         ).fetchone()
         if existing:
             print(f"[hypothesize] skip duplicado: experiment {existing[0]}")
@@ -1144,9 +1157,9 @@ async def hypothesize():
 
         notes = exp.get("notes", "autolab")
         cur.execute("""
-            INSERT INTO experiments (strategy, params_json, dataset, priority, notes, status)
-            VALUES (?, ?, 'both', 0, ?, 'pending')
-        """, (strategy, params_normalized, notes))
+            INSERT INTO experiments (strategy, params_json, dataset, priority, notes, status, symbol)
+            VALUES (?, ?, 'both', 0, ?, 'pending', ?)
+        """, (strategy, params_normalized, notes, exp_symbol))
         queued += 1
     conn.commit()
     conn.close()
@@ -2218,6 +2231,58 @@ def metrics_system():
         }
     except Exception as e:
         raise HTTPException(500, str(e))
+
+
+# ==============================================================================
+# ADMIN — DESCARGA DE VELAS
+# ==============================================================================
+
+ACTIVE_SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT"]
+
+@app.post("/admin/download-candles")
+async def admin_download_candles(
+    symbol: str = Query("ETHUSDT"),
+    timeframe: str = Query("4h"),
+):
+    """
+    Descarga velas de Binance Vision y las guarda en SQLite.
+    Usa el mismo rango TRAIN/VALID definido en config.py.
+    """
+    if symbol not in ACTIVE_SYMBOLS:
+        raise HTTPException(400, f"Symbol {symbol} no está en ACTIVE_SYMBOLS: {ACTIVE_SYMBOLS}")
+    if timeframe not in ("1h", "4h"):
+        raise HTTPException(400, "Timeframe debe ser 1h o 4h")
+
+    try:
+        sys.path.insert(0, SCRIPTS_PATH)
+        from fase1_datos import descargar_rango, get_connection, crear_tablas
+        from config import TRAIN_START, TRAIN_END, VALID_START, VALID_END
+
+        conn = get_connection()
+        crear_tablas(conn)
+
+        results = {}
+        for dataset, start, end in [("train", TRAIN_START, TRAIN_END), ("valid", VALID_START, VALID_END)]:
+            # Check if already downloaded
+            existing = conn.execute(
+                "SELECT COUNT(*) FROM candles WHERE symbol=? AND timeframe=? AND dataset=?",
+                (symbol, timeframe, dataset)
+            ).fetchone()[0]
+            if existing > 100:
+                results[dataset] = {"status": "already_exists", "candles": existing}
+                continue
+            descargar_rango(start, end, symbol, dataset, conn, timeframe)
+            count = conn.execute(
+                "SELECT COUNT(*) FROM candles WHERE symbol=? AND timeframe=? AND dataset=?",
+                (symbol, timeframe, dataset)
+            ).fetchone()[0]
+            results[dataset] = {"status": "downloaded", "candles": count}
+
+        conn.close()
+        return {"symbol": symbol, "timeframe": timeframe, "results": results}
+    except Exception as e:
+        import traceback
+        raise HTTPException(500, f"{e}\n{traceback.format_exc()}")
 
 
 # ==============================================================================

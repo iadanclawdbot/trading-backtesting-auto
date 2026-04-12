@@ -118,6 +118,11 @@ export function RunsTable() {
                         >
                           {strat.label}
                         </span>
+                        {result.symbol && result.symbol !== "BTCUSDT" && (
+                          <span className="pill text-[9px] ml-1" style={{ background: "rgba(99,102,241,0.1)", borderColor: "rgba(99,102,241,0.3)", color: "#818cf8" }}>
+                            {result.symbol.replace("USDT", "")}
+                          </span>
+                        )}
                       </td>
                       {COLUMNS.map((col) => (
                         <td key={col.key} className="text-right px-3 py-2.5 num">

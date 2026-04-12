@@ -171,7 +171,7 @@ Hacer en orden. Bloquean todo lo demás.
   - Filtro agregado: `AND win_rate < 95.0` en `/status` y `/context`
   - Archivo: `backend/src/autolab_api.py`
 - [x] **Fix benchmark en `generar_batch_report.py`** — actualizado a campeón actual ✅ 2026-04-12
-- [ ] **Re-exportar workflows n8n** — los JSON en `backend/n8n/` no reflejan la arquitectura v3
+- [x] **Re-exportar workflows n8n** — 3 workflows exportados desde API n8n ✅ 2026-04-12
 - [ ] **Autenticación en la API** — todos los endpoints son públicos
 
   - Agregar `X-API-Key` header con FastAPI `Security()`

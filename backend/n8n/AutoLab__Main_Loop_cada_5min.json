@@ -1,0 +1,402 @@
+{
+    "updatedAt": "2026-04-11T21:51:38.218Z",
+    "createdAt": "2026-03-24T19:19:03.456Z",
+    "id": "RJgzeedKorHQOYRD",
+    "name": "AutoLab \u2014 Main Loop (cada 5min)",
+    "description": null,
+    "active": true,
+    "isArchived": false,
+    "nodes": [
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://autolab-api.dantelujan.online/analyze",
+                "options": {}
+            },
+            "id": "analyze-001",
+            "name": "POST /analyze",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                240,
+                304
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://autolab-api.dantelujan.online/hypothesize",
+                "options": {}
+            },
+            "id": "hypothesize-001",
+            "name": "POST /hypothesize",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                480,
+                304
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://autolab-api.dantelujan.online/run-pipeline",
+                "options": {
+                    "timeout": 600000
+                }
+            },
+            "id": "pipeline-001",
+            "name": "POST /run-pipeline",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                720,
+                304
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://autolab-api.dantelujan.online/learn",
+                "options": {}
+            },
+            "id": "learn-001",
+            "name": "POST /learn",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                960,
+                304
+            ]
+        },
+        {
+            "parameters": {
+                "chatId": "1059019835",
+                "text": "={{ $json.telegram_msg }}",
+                "additionalFields": {}
+            },
+            "id": "telegram-learn-notify",
+            "name": "Telegram Notificar ciclo",
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                1200,
+                304
+            ],
+            "webhookId": "a91b934a-aa47-4fea-bd2b-cc7a55bf8a0b",
+            "credentials": {
+                "telegramApi": {
+                    "id": "Xj52PYgRoPbfUJC7",
+                    "name": "Telegram Autoevolucion-API-AI"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "hours",
+                            "hoursInterval": 23
+                        }
+                    ]
+                }
+            },
+            "id": "cron-001",
+            "name": "Cron 5min",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.2,
+            "position": [
+                0,
+                304
+            ]
+        }
+    ],
+    "connections": {
+        "POST /analyze": {
+            "main": [
+                [
+                    {
+                        "node": "POST /hypothesize",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "POST /hypothesize": {
+            "main": [
+                [
+                    {
+                        "node": "POST /run-pipeline",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "POST /run-pipeline": {
+            "main": [
+                [
+                    {
+                        "node": "POST /learn",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "POST /learn": {
+            "main": [
+                [
+                    {
+                        "node": "Telegram Notificar ciclo",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Cron 5min": {
+            "main": [
+                [
+                    {
+                        "node": "POST /analyze",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1",
+        "timezone": "America/Argentina/Mendoza",
+        "saveManualExecutions": true,
+        "callerPolicy": "workflowsFromSameOwner",
+        "availableInMCP": false,
+        "binaryMode": "separate"
+    },
+    "staticData": {
+        "node:Cron 3min": {
+            "recurrenceRules": []
+        },
+        "node:Cron 30min": {
+            "recurrenceRules": []
+        },
+        "node:Cron 5min": {
+            "recurrenceRules": [
+                23
+            ]
+        }
+    },
+    "meta": null,
+    "pinData": {},
+    "versionId": "278e2c06-1e8b-4f40-bf82-dd652d67dee3",
+    "activeVersionId": "278e2c06-1e8b-4f40-bf82-dd652d67dee3",
+    "versionCounter": 182,
+    "triggerCount": 1,
+    "shared": [
+        {
+            "updatedAt": "2026-03-24T19:19:03.456Z",
+            "createdAt": "2026-03-24T19:19:03.456Z",
+            "role": "workflow:owner",
+            "workflowId": "RJgzeedKorHQOYRD",
+            "projectId": "qke1CsVGQnl10ilh",
+            "project": {
+                "updatedAt": "2025-12-20T20:06:25.899Z",
+                "createdAt": "2025-12-20T20:03:54.084Z",
+                "id": "qke1CsVGQnl10ilh",
+                "name": "Dante Lujan <soydantelujan@gmail.com>",
+                "type": "personal",
+                "icon": null,
+                "description": null,
+                "creatorId": "bc8b7699-d048-48bc-8db3-36d2bb5c3b65"
+            }
+        }
+    ],
+    "tags": [],
+    "activeVersion": {
+        "updatedAt": "2026-04-11T21:51:44.098Z",
+        "createdAt": "2026-04-11T21:51:38.219Z",
+        "versionId": "278e2c06-1e8b-4f40-bf82-dd652d67dee3",
+        "workflowId": "RJgzeedKorHQOYRD",
+        "nodes": [
+            {
+                "parameters": {
+                    "method": "POST",
+                    "url": "https://autolab-api.dantelujan.online/analyze",
+                    "options": {}
+                },
+                "id": "analyze-001",
+                "name": "POST /analyze",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "position": [
+                    240,
+                    304
+                ]
+            },
+            {
+                "parameters": {
+                    "method": "POST",
+                    "url": "https://autolab-api.dantelujan.online/hypothesize",
+                    "options": {}
+                },
+                "id": "hypothesize-001",
+                "name": "POST /hypothesize",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "position": [
+                    480,
+                    304
+                ]
+            },
+            {
+                "parameters": {
+                    "method": "POST",
+                    "url": "https://autolab-api.dantelujan.online/run-pipeline",
+                    "options": {
+                        "timeout": 600000
+                    }
+                },
+                "id": "pipeline-001",
+                "name": "POST /run-pipeline",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "position": [
+                    720,
+                    304
+                ]
+            },
+            {
+                "parameters": {
+                    "method": "POST",
+                    "url": "https://autolab-api.dantelujan.online/learn",
+                    "options": {}
+                },
+                "id": "learn-001",
+                "name": "POST /learn",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "position": [
+                    960,
+                    304
+                ]
+            },
+            {
+                "parameters": {
+                    "chatId": "1059019835",
+                    "text": "={{ $json.telegram_msg }}",
+                    "additionalFields": {}
+                },
+                "id": "telegram-learn-notify",
+                "name": "Telegram Notificar ciclo",
+                "type": "n8n-nodes-base.telegram",
+                "typeVersion": 1.2,
+                "position": [
+                    1200,
+                    304
+                ],
+                "webhookId": "a91b934a-aa47-4fea-bd2b-cc7a55bf8a0b",
+                "credentials": {
+                    "telegramApi": {
+                        "id": "Xj52PYgRoPbfUJC7",
+                        "name": "Telegram Autoevolucion-API-AI"
+                    }
+                }
+            },
+            {
+                "parameters": {
+                    "rule": {
+                        "interval": [
+                            {
+                                "field": "hours",
+                                "hoursInterval": 23
+                            }
+                        ]
+                    }
+                },
+                "id": "cron-001",
+                "name": "Cron 5min",
+                "type": "n8n-nodes-base.scheduleTrigger",
+                "typeVersion": 1.2,
+                "position": [
+                    0,
+                    304
+                ]
+            }
+        ],
+        "connections": {
+            "POST /analyze": {
+                "main": [
+                    [
+                        {
+                            "node": "POST /hypothesize",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "POST /hypothesize": {
+                "main": [
+                    [
+                        {
+                            "node": "POST /run-pipeline",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "POST /run-pipeline": {
+                "main": [
+                    [
+                        {
+                            "node": "POST /learn",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "POST /learn": {
+                "main": [
+                    [
+                        {
+                            "node": "Telegram Notificar ciclo",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "Cron 5min": {
+                "main": [
+                    [
+                        {
+                            "node": "POST /analyze",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            }
+        },
+        "authors": "Dante Lujan",
+        "name": "Version 278e2c06",
+        "description": "",
+        "autosaved": true,
+        "workflowPublishHistory": [
+            {
+                "createdAt": "2026-04-11T21:51:44.096Z",
+                "id": 235,
+                "workflowId": "RJgzeedKorHQOYRD",
+                "versionId": "278e2c06-1e8b-4f40-bf82-dd652d67dee3",
+                "event": "activated",
+                "userId": "bc8b7699-d048-48bc-8db3-36d2bb5c3b65"
+            }
+        ]
+    }
+}

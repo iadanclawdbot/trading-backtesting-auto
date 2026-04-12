@@ -1,0 +1,238 @@
+{
+    "updatedAt": "2026-03-30T19:47:59.442Z",
+    "createdAt": "2026-03-24T19:19:17.498Z",
+    "id": "WOJji6MHwdrsbTI1",
+    "name": "AutoLab \u2014 Daily Research (9am)",
+    "description": null,
+    "active": true,
+    "isArchived": false,
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "cronExpression",
+                            "expression": "0 0 9 * * *"
+                        }
+                    ]
+                }
+            },
+            "id": "cron-daily-001",
+            "name": "Cron 9am Daily",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                0,
+                304
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://autolab-api.dantelujan.online/daily-research",
+                "options": {
+                    "timeout": 120000
+                }
+            },
+            "id": "daily-research-001",
+            "name": "POST /daily-research",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                240,
+                304
+            ]
+        },
+        {
+            "parameters": {
+                "chatId": "1059019835",
+                "text": "={{ $json.telegram_msg }}",
+                "additionalFields": {}
+            },
+            "id": "telegram-daily-notify",
+            "name": "Telegram Notificar Daily",
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                480,
+                304
+            ],
+            "webhookId": "47dd528c-95fb-4bb7-8733-4892364c63c1",
+            "credentials": {
+                "telegramApi": {
+                    "id": "Xj52PYgRoPbfUJC7",
+                    "name": "Telegram Autoevolucion-API-AI"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Cron 9am Daily": {
+            "main": [
+                [
+                    {
+                        "node": "POST /daily-research",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "POST /daily-research": {
+            "main": [
+                [
+                    {
+                        "node": "Telegram Notificar Daily",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1",
+        "timezone": "America/Argentina/Mendoza",
+        "saveManualExecutions": true,
+        "callerPolicy": "workflowsFromSameOwner",
+        "availableInMCP": false,
+        "binaryMode": "separate"
+    },
+    "staticData": {
+        "node:Cron 9am Daily": {
+            "recurrenceRules": []
+        }
+    },
+    "meta": null,
+    "pinData": {},
+    "versionId": "655b1430-c0fa-41d7-9e0d-73dbac936c09",
+    "activeVersionId": "655b1430-c0fa-41d7-9e0d-73dbac936c09",
+    "versionCounter": 67,
+    "triggerCount": 1,
+    "shared": [
+        {
+            "updatedAt": "2026-03-24T19:19:17.498Z",
+            "createdAt": "2026-03-24T19:19:17.498Z",
+            "role": "workflow:owner",
+            "workflowId": "WOJji6MHwdrsbTI1",
+            "projectId": "qke1CsVGQnl10ilh",
+            "project": {
+                "updatedAt": "2025-12-20T20:06:25.899Z",
+                "createdAt": "2025-12-20T20:03:54.084Z",
+                "id": "qke1CsVGQnl10ilh",
+                "name": "Dante Lujan <soydantelujan@gmail.com>",
+                "type": "personal",
+                "icon": null,
+                "description": null,
+                "creatorId": "bc8b7699-d048-48bc-8db3-36d2bb5c3b65"
+            }
+        }
+    ],
+    "tags": [],
+    "activeVersion": {
+        "updatedAt": "2026-03-26T07:28:45.055Z",
+        "createdAt": "2026-03-26T07:28:38.977Z",
+        "versionId": "655b1430-c0fa-41d7-9e0d-73dbac936c09",
+        "workflowId": "WOJji6MHwdrsbTI1",
+        "nodes": [
+            {
+                "parameters": {
+                    "rule": {
+                        "interval": [
+                            {
+                                "field": "cronExpression",
+                                "expression": "0 0 9 * * *"
+                            }
+                        ]
+                    }
+                },
+                "id": "cron-daily-001",
+                "name": "Cron 9am Daily",
+                "type": "n8n-nodes-base.scheduleTrigger",
+                "typeVersion": 1.1,
+                "position": [
+                    0,
+                    304
+                ]
+            },
+            {
+                "parameters": {
+                    "method": "POST",
+                    "url": "https://autolab-api.dantelujan.online/daily-research",
+                    "options": {
+                        "timeout": 120000
+                    }
+                },
+                "id": "daily-research-001",
+                "name": "POST /daily-research",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "position": [
+                    240,
+                    304
+                ]
+            },
+            {
+                "parameters": {
+                    "chatId": "1059019835",
+                    "text": "={{ $json.telegram_msg }}",
+                    "additionalFields": {}
+                },
+                "id": "telegram-daily-notify",
+                "name": "Telegram Notificar Daily",
+                "type": "n8n-nodes-base.telegram",
+                "typeVersion": 1.2,
+                "position": [
+                    480,
+                    304
+                ],
+                "webhookId": "47dd528c-95fb-4bb7-8733-4892364c63c1",
+                "credentials": {
+                    "telegramApi": {
+                        "id": "Xj52PYgRoPbfUJC7",
+                        "name": "Telegram Autoevolucion-API-AI"
+                    }
+                }
+            }
+        ],
+        "connections": {
+            "Cron 9am Daily": {
+                "main": [
+                    [
+                        {
+                            "node": "POST /daily-research",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "POST /daily-research": {
+                "main": [
+                    [
+                        {
+                            "node": "Telegram Notificar Daily",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            }
+        },
+        "authors": "Dante Lujan",
+        "name": "Version 655b1430",
+        "description": "",
+        "autosaved": true,
+        "workflowPublishHistory": [
+            {
+                "createdAt": "2026-03-26T07:28:45.052Z",
+                "id": 189,
+                "workflowId": "WOJji6MHwdrsbTI1",
+                "versionId": "655b1430-c0fa-41d7-9e0d-73dbac936c09",
+                "event": "activated",
+                "userId": "bc8b7699-d048-48bc-8db3-36d2bb5c3b65"
+            }
+        ]
+    }
+}

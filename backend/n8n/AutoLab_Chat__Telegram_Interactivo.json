@@ -1,0 +1,274 @@
+{
+    "updatedAt": "2026-03-30T19:48:01.593Z",
+    "createdAt": "2026-03-25T20:25:08.202Z",
+    "id": "hANSvWyqiH6KpYxi",
+    "name": "AutoLab Chat \u2014 Telegram Interactivo",
+    "description": null,
+    "active": true,
+    "isArchived": false,
+    "nodes": [
+        {
+            "parameters": {
+                "updates": [
+                    "message"
+                ],
+                "additionalFields": {}
+            },
+            "id": "tg-trigger",
+            "name": "Telegram Trigger",
+            "type": "n8n-nodes-base.telegramTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                0,
+                304
+            ],
+            "webhookId": "autolab-chat-webhook",
+            "credentials": {
+                "telegramApi": {
+                    "id": "Xj52PYgRoPbfUJC7",
+                    "name": "Telegram Autoevolucion-API-AI"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://autolab-api.dantelujan.online/chat",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "message",
+                            "value": "={{ $('Telegram Trigger').item.json.message.text }}"
+                        }
+                    ]
+                },
+                "options": {
+                    "timeout": 90000
+                }
+            },
+            "id": "post-chat",
+            "name": "POST /chat",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                272,
+                304
+            ]
+        },
+        {
+            "parameters": {
+                "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+                "text": "={{ $json.telegram_msg }}",
+                "additionalFields": {}
+            },
+            "id": "tg-reply",
+            "name": "Telegram Responder",
+            "type": "n8n-nodes-base.telegram",
+            "typeVersion": 1.2,
+            "position": [
+                528,
+                304
+            ],
+            "webhookId": "cb9c5486-9ba4-45cc-93b3-e2dc2247150e",
+            "credentials": {
+                "telegramApi": {
+                    "id": "Xj52PYgRoPbfUJC7",
+                    "name": "Telegram Autoevolucion-API-AI"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Telegram Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "POST /chat",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "POST /chat": {
+            "main": [
+                [
+                    {
+                        "node": "Telegram Responder",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "callerPolicy": "workflowsFromSameOwner",
+        "availableInMCP": false,
+        "executionOrder": "v1",
+        "binaryMode": "separate"
+    },
+    "staticData": null,
+    "meta": null,
+    "pinData": {},
+    "versionId": "9aaa6633-9a38-4460-8a90-61350e164557",
+    "activeVersionId": "9aaa6633-9a38-4460-8a90-61350e164557",
+    "versionCounter": 32,
+    "triggerCount": 1,
+    "shared": [
+        {
+            "updatedAt": "2026-03-25T20:25:08.202Z",
+            "createdAt": "2026-03-25T20:25:08.202Z",
+            "role": "workflow:owner",
+            "workflowId": "hANSvWyqiH6KpYxi",
+            "projectId": "qke1CsVGQnl10ilh",
+            "project": {
+                "updatedAt": "2025-12-20T20:06:25.899Z",
+                "createdAt": "2025-12-20T20:03:54.084Z",
+                "id": "qke1CsVGQnl10ilh",
+                "name": "Dante Lujan <soydantelujan@gmail.com>",
+                "type": "personal",
+                "icon": null,
+                "description": null,
+                "creatorId": "bc8b7699-d048-48bc-8db3-36d2bb5c3b65"
+            }
+        }
+    ],
+    "tags": [],
+    "activeVersion": {
+        "updatedAt": "2026-03-26T04:55:11.765Z",
+        "createdAt": "2026-03-26T04:55:06.773Z",
+        "versionId": "9aaa6633-9a38-4460-8a90-61350e164557",
+        "workflowId": "hANSvWyqiH6KpYxi",
+        "nodes": [
+            {
+                "parameters": {
+                    "updates": [
+                        "message"
+                    ],
+                    "additionalFields": {}
+                },
+                "id": "tg-trigger",
+                "name": "Telegram Trigger",
+                "type": "n8n-nodes-base.telegramTrigger",
+                "typeVersion": 1.1,
+                "position": [
+                    0,
+                    304
+                ],
+                "webhookId": "autolab-chat-webhook",
+                "credentials": {
+                    "telegramApi": {
+                        "id": "Xj52PYgRoPbfUJC7",
+                        "name": "Telegram Autoevolucion-API-AI"
+                    }
+                }
+            },
+            {
+                "parameters": {
+                    "method": "POST",
+                    "url": "https://autolab-api.dantelujan.online/chat",
+                    "sendHeaders": true,
+                    "headerParameters": {
+                        "parameters": [
+                            {
+                                "name": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ]
+                    },
+                    "sendBody": true,
+                    "bodyParameters": {
+                        "parameters": [
+                            {
+                                "name": "message",
+                                "value": "={{ $('Telegram Trigger').item.json.message.text }}"
+                            }
+                        ]
+                    },
+                    "options": {
+                        "timeout": 90000
+                    }
+                },
+                "id": "post-chat",
+                "name": "POST /chat",
+                "type": "n8n-nodes-base.httpRequest",
+                "typeVersion": 4.2,
+                "position": [
+                    272,
+                    304
+                ]
+            },
+            {
+                "parameters": {
+                    "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+                    "text": "={{ $json.telegram_msg }}",
+                    "additionalFields": {}
+                },
+                "id": "tg-reply",
+                "name": "Telegram Responder",
+                "type": "n8n-nodes-base.telegram",
+                "typeVersion": 1.2,
+                "position": [
+                    528,
+                    304
+                ],
+                "webhookId": "cb9c5486-9ba4-45cc-93b3-e2dc2247150e",
+                "credentials": {
+                    "telegramApi": {
+                        "id": "Xj52PYgRoPbfUJC7",
+                        "name": "Telegram Autoevolucion-API-AI"
+                    }
+                }
+            }
+        ],
+        "connections": {
+            "Telegram Trigger": {
+                "main": [
+                    [
+                        {
+                            "node": "POST /chat",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            },
+            "POST /chat": {
+                "main": [
+                    [
+                        {
+                            "node": "Telegram Responder",
+                            "type": "main",
+                            "index": 0
+                        }
+                    ]
+                ]
+            }
+        },
+        "authors": "Dante Lujan",
+        "name": "Version 9aaa6633",
+        "description": "",
+        "autosaved": true,
+        "workflowPublishHistory": [
+            {
+                "createdAt": "2026-03-26T04:55:11.763Z",
+                "id": 187,
+                "workflowId": "hANSvWyqiH6KpYxi",
+                "versionId": "9aaa6633-9a38-4460-8a90-61350e164557",
+                "event": "activated",
+                "userId": "bc8b7699-d048-48bc-8db3-36d2bb5c3b65"
+            }
+        ]
+    }
+}

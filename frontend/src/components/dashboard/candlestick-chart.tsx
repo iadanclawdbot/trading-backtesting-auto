@@ -147,69 +147,56 @@ export function CandlestickChart() {
   const firstCandle = data?.candles?.[0];
   const tradesCount = data?.champion_trades?.length ?? 0;
 
+  const toggleClass = (active: boolean) =>
+    `px-2 py-0.5 text-[10px] num rounded transition-colors ${
+      active
+        ? "bg-[var(--color-green-dim)] text-[var(--color-green)] border border-[rgba(74,222,128,0.2)]"
+        : "text-[var(--color-text-2)] hover:text-[var(--color-text-1)]"
+    }`;
+
   return (
     <div className="panel">
-      <div className="flex items-center justify-between mb-2">
+      {/* Row 1: title + price */}
+      <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-1.5">
-          <span className="lbl">{coin.replace("USDT", "")}/USDT — Backtest candles</span>
+          <span className="lbl">{coin.replace("USDT", "")}/USDT</span>
           <TooltipHelp
             term="Candles"
             text="Velas OHLCV reales de la DB de backtesting. Las flechas marcan entradas (verde) y salidas (verde=WIN, rojo=LOSS) del campeon actual."
           />
+        </div>
+        <div className="flex items-center gap-2">
           {lastCandle && (
-            <span className="num text-[12px] text-[var(--color-text-2)] ml-1">
+            <span className="num text-[12px] text-[var(--color-text-2)]">
               ${lastCandle.close.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </span>
           )}
           {tradesCount > 0 && (
-            <span className="pill ml-1" style={{ background: "var(--color-green-dim)", borderColor: "rgba(74,222,128,0.2)", color: "var(--color-green)" }}>
+            <span className="pill" style={{ background: "var(--color-green-dim)", borderColor: "rgba(74,222,128,0.2)", color: "var(--color-green)" }}>
               {tradesCount} trades
             </span>
           )}
         </div>
-        <div className="flex gap-1 items-center">
-          {COINS.map((c) => (
-            <button
-              key={c}
-              onClick={() => setCoin(c)}
-              className={`px-2 py-0.5 text-[10px] num rounded transition-colors ${
-                coin === c
-                  ? "bg-[var(--color-green-dim)] text-[var(--color-green)] border border-[rgba(74,222,128,0.2)]"
-                  : "text-[var(--color-text-2)] hover:text-[var(--color-text-1)]"
-              }`}
-            >
-              {c.replace("USDT", "")}
-            </button>
-          ))}
-          <span className="text-[var(--color-text-2)] text-[10px] mx-0.5">|</span>
-          {(["valid", "train"] as DS[]).map((d) => (
-            <button
-              key={d}
-              onClick={() => setDataset(d)}
-              className={`px-2 py-0.5 text-[10px] num rounded transition-colors ${
-                dataset === d
-                  ? "bg-[var(--color-green-dim)] text-[var(--color-green)] border border-[rgba(74,222,128,0.2)]"
-                  : "text-[var(--color-text-2)] hover:text-[var(--color-text-1)]"
-              }`}
-            >
-              {d}
-            </button>
-          ))}
-          <span className="text-[var(--color-text-2)] text-[10px] mx-0.5">|</span>
-          {(["4h", "1h"] as TF[]).map((tf) => (
-            <button
-              key={tf}
-              onClick={() => setTimeframe(tf)}
-              className={`px-2 py-0.5 text-[10px] num rounded transition-colors ${
-                timeframe === tf
-                  ? "bg-[var(--color-green-dim)] text-[var(--color-green)] border border-[rgba(74,222,128,0.2)]"
-                  : "text-[var(--color-text-2)] hover:text-[var(--color-text-1)]"
-              }`}
-            >
-              {tf}
-            </button>
-          ))}
-        </div>
+      </div>
+      {/* Row 2: toggles */}
+      <div className="flex items-center gap-1 mb-2 flex-wrap">
+        {COINS.map((c) => (
+          <button key={c} onClick={() => setCoin(c)} className={toggleClass(coin === c)}>
+            {c.replace("USDT", "")}
+          </button>
+        ))}
+        <span className="text-[var(--color-text-2)] text-[10px] mx-0.5">|</span>
+        {(["valid", "train"] as DS[]).map((d) => (
+          <button key={d} onClick={() => setDataset(d)} className={toggleClass(dataset === d)}>
+            {d}
+          </button>
+        ))}
+        <span className="text-[var(--color-text-2)] text-[10px] mx-0.5">|</span>
+        {(["4h", "1h"] as TF[]).map((tf) => (
+          <button key={tf} onClick={() => setTimeframe(tf)} className={toggleClass(timeframe === tf)}>
+            {tf}
+          </button>
+        ))}
       </div>
       <div className="relative" style={{ height: 260 }}>
         {isLoading && !data && (

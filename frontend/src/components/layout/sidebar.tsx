@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  BookOpen,
   Lightbulb,
   FlaskConical,
   Activity,
@@ -18,7 +17,6 @@ const NAV = [
     { href: "/", label: "Overview", icon: LayoutDashboard },
   ]},
   { section: "Inteligencia", items: [
-    { href: "/learnings", label: "Learnings", icon: BookOpen },
     { href: "/insights", label: "Opus insights", icon: Lightbulb },
   ]},
 ];

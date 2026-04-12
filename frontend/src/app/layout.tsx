@@ -45,7 +45,7 @@ export default function RootLayout({
               <Sidebar />
 
               {/* Contenido principal */}
-              <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+              <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 lg:pb-0">
                 {children}
               </main>
             </div>

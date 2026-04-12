@@ -81,6 +81,7 @@ body {
   font-family: var(--font-sans, system-ui, sans-serif);
   font-size: 13px;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 /* ─── Core utility classes ────────────────────────────────── */

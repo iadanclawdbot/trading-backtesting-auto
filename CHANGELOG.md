@@ -5,6 +5,46 @@
 
 ---
 
+## 2026-04-12 — Fix estancamiento del ciclo autónomo (RCA-4 a RCA-7)
+
+### Contexto
+El campeón `vwap_pullback` ($338.30) llevaba sin ser superado desde el 2026-04-06. Análisis reveló 0/20 ciclos beat benchmark, 49/50 resultados en `/context` eran vwap_pullback, y ghost params seguían en datos históricos. El sistema estaba en un loop de micro-optimización sin salida.
+
+### Completado
+
+**Diagnóstico profundo via API** (sin acceso directo a SQLite):
+- `/context?top_n=50`: 49/50 resultados = vwap_pullback, 38 con capital_final idéntico ($338.3)
+- `/metrics/cycles?limit=20`: 0/20 ciclos beat benchmark, todos "Explorar vwap_pullback con..."
+- Ghost params (`polymarket_threshold`, `stagger_orders`, etc.) aún presentes en runs históricos
+- `/analyze` excluía mean_reversion explícitamente del prompt
+
+**4 fixes aplicados** (commit `0319b4e`):
+
+| RCA | Problema | Fix |
+|-----|----------|-----|
+| 4 | `/analyze` decía "ÚNICAS estrategias: breakout, vwap_pullback" | Incluir mean_reversion + instrucción de exploración diversa |
+| 5 | `/context` query sin diversificación → 98% vwap_pullback | UNION per-strategy (top N/4 por estrategia) |
+| 6 | Ghost params en runs históricos contaminan LLM | Strip de params inválidos en output de `/context` y campeón en `/hypothesize` |
+| 7 | Sin detección de estancamiento | Staleness counter + 3 niveles de presión de exploración (normal/<10/>=20 ciclos) |
+
+### Pendiente al cierre
+- [ ] Verificar redeploy exitoso en Coolify
+- [ ] 24h después: confirmar diversidad en learnings y experiments
+- [ ] Animaciones con Motion (frontend)
+- [ ] Candlestick chart con lightweight-charts
+
+### Estado del sistema al cierre
+| Componente | Estado |
+|------------|--------|
+| AutoLab API | ✅ UP — sqlite y postgresql conectados |
+| GitHub repo | ✅ main al día — commit `0319b4e` |
+| Coolify | ⏳ Redeploy en proceso |
+| Champion | `vwap_pullback` — $338.30 (+35.3%) — Sharpe 1.593 |
+| Ciclo autónomo | 🔄 Fixes anti-estancamiento deployados — en observación |
+| Runs totales | 17,561 runs / 8,812 experiments / 423k trades |
+
+---
+
 ## 2026-04-07 — Sesión de migración y diagnóstico
 
 ### Contexto

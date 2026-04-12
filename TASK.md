@@ -20,9 +20,9 @@
 | GitHub repo creado                   | ✅ `iadanclawdbot/trading-backtesting-auto`   | 2026-04-07 |
 | Coolify apuntando a este repo        | ✅ Deployado — commit 948aca2                 | 2026-04-08 |
 | Frontend dashboard (Vercel)          | ✅ 18 componentes, 9 endpoints, 3 páginas     | 2026-04-08 |
-| Backend /metrics/* endpoints         | ✅ 4 endpoints nuevos — pendiente redeploy    | 2026-04-08 |
+| Backend /metrics/* endpoints         | ✅ 4 endpoints activos en producción           | 2026-04-12 |
 | Fixes estancamiento (3 RCAs)         | ✅ En producción desde deploy 2026-04-08      | 2026-04-08 |
-| Ciclo autónomo mejorando resultados  | 🔄 En observación — fixes activos             | 2026-04-08 |
+| Ciclo autónomo mejorando resultados  | 🔄 RCA-4 a RCA-7 aplicados — pendiente redeploy | 2026-04-12 |
 
 **Campeón actual** (al 2026-04-08):
 `vwap_pullback` | Capital: $338.30 (+35.3%) | Sharpe OOS: 1.593 | Trades: 19
@@ -82,7 +82,12 @@ Hacer en orden. Bloquean todo lo demás.
 - [x] Fix RCA-2: strip ghost params en /hypothesize (`autolab_api.py`)
 - [x] Fix RCA-3: mean_reversion habilitada en /hypothesize (`autolab_api.py`)
 - [x] **Deploy en Coolify** — commit `948aca2` en producción ✅ 2026-04-08
-- [ ] **Verificar** — 24h después del deploy, revisar learnings para ver mean_reversion y params limpios
+- [x] **Verificar** — mean_reversion en learnings, ghost params limpios, WR sin artefactos ✅ 2026-04-12
+- [x] **Fix RCA-4 a RCA-7** — estancamiento del ciclo autónomo (commit `0319b4e`) ✅ 2026-04-12
+  - RCA-4: /analyze excluía mean_reversion
+  - RCA-5: /context saturado 49/50 vwap_pullback → UNION per-strategy
+  - RCA-6: ghost params en runs históricos → strip en output
+  - RCA-7: sin detección de estancamiento → staleness counter + presión exploración
 
 ---
 
@@ -111,7 +116,7 @@ Hacer en orden. Bloquean todo lo demás.
 - [x] **Backend /metrics/* endpoints** — equity-curve, champion-history, cycles, system ✅ 2026-04-08
 
 **Pendiente frontend:**
-- [ ] Redeploy backend en Coolify para activar /metrics/* endpoints
+- [x] Redeploy backend en Coolify para activar /metrics/* endpoints ✅ 2026-04-12
 - [ ] Animaciones con Motion (entrada staggered, números animados)
 - [ ] Candlestick chart con lightweight-charts (requiere datos OHLCV)
 

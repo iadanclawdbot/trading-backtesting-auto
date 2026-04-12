@@ -259,7 +259,7 @@ def get_context(
             "breakout": {"lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r"},
             "vwap_pullback": {"sl_atr_mult","trail_atr_mult","adx_filter","vol_ratio_min","breakeven_after_r","ema_trend_period","ema_trend_daily_period"},
             "mean_reversion": {"rsi_period","rsi_oversold","bb_period","bb_std","atr_period","sl_atr_mult","ema_trend_period","breakeven_after_r","max_hold_bars"},
-            "ema_crossover": {"sl_atr_mult","trail_atr_mult","adx_filter","vol_ratio_min","breakeven_after_r","ema_trend_period","ema_trend_daily_period"},
+            "ema_crossover": {"ema_fast","ema_slow","rsi_period","rsi_min","rsi_max","stop_loss_pct","take_profit_pct","vol_ratio_min","vol_period","ema_gap_min"},
             "breakdown_short": {"lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r"},
             "breakdown": {"lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r"},
             "retest": {"lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r","max_retest_bars"},
@@ -1021,9 +1021,10 @@ async def hypothesize():
         "mean_reversion params: rsi_period(7-21), rsi_oversold(25-40), bb_period(14-30), "
         "bb_std(1.5-3.0), atr_period(7-21), sl_atr_mult(1.5-3.0), "
         "ema_trend_period(20-200), breakeven_after_r(0=disabled, 0.5-1.0), max_hold_bars(10-40).\n"
-        "ema_crossover params (timeframe 1h!): sl_atr_mult(1.0-3.5), trail_atr_mult(1.5-4.0), "
-        "adx_filter(0-35), vol_ratio_min(0.5-3.0), breakeven_after_r(0=disabled, 0.5-1.5), "
-        "ema_trend_period(10-80), ema_trend_daily_period(15-60). Fue el PRIMER campeón ($309).\n"
+        "ema_crossover params (timeframe 1h! SL/TP fijo, NO trailing): ema_fast(5-30), ema_slow(20-100), "
+        "rsi_period(7-21), rsi_min(30-60), rsi_max(60-85), stop_loss_pct(0.005-0.03), "
+        "take_profit_pct(0.01-0.06), vol_ratio_min(0.3-2.0). Fue el PRIMER campeón ($309). "
+        "IMPORTANTE: ema_slow DEBE ser > ema_fast. stop_loss_pct es % del precio (0.01=1%), take_profit_pct igual.\n"
         "breakdown_short params (shorts!): lookback(10-40), vol_ratio_min(0.8-3.0), atr_period(10-20), "
         "sl_atr_mult(0.75-4.0), trail_atr_mult(1.5-4.0), ema_trend_period(10-50), "
         "ema_trend_daily_period(15-60), adx_filter(0-35), breakeven_after_r(0=disabled, 0.5-1.5).\n"
@@ -1047,7 +1048,7 @@ async def hypothesize():
         "breakout": ["lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r"],
         "vwap_pullback": ["sl_atr_mult","trail_atr_mult","adx_filter","vol_ratio_min","breakeven_after_r","ema_trend_period","ema_trend_daily_period"],
         "mean_reversion": ["rsi_period","rsi_oversold","bb_period","bb_std","atr_period","sl_atr_mult","ema_trend_period"],
-        "ema_crossover": ["sl_atr_mult","trail_atr_mult","adx_filter","vol_ratio_min","ema_trend_period","ema_trend_daily_period"],
+        "ema_crossover": ["ema_fast","ema_slow","rsi_period","rsi_min","rsi_max","stop_loss_pct","take_profit_pct","vol_ratio_min"],
         "breakdown_short": ["lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r"],
         "retest": ["lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r","max_retest_bars"],
     }
@@ -1065,10 +1066,10 @@ async def hypothesize():
             "ema_trend_daily_period": (15, 60),
         },
         "ema_crossover": {
-            "sl_atr_mult": (1.0, 3.5), "trail_atr_mult": (1.5, 4.0),
-            "adx_filter": (0, 35), "vol_ratio_min": (0.5, 3.0),
-            "breakeven_after_r": (0, 1.5), "ema_trend_period": (10, 80),
-            "ema_trend_daily_period": (15, 60),
+            "ema_fast": (5, 30), "ema_slow": (20, 100),
+            "rsi_period": (7, 21), "rsi_min": (30, 60), "rsi_max": (60, 85),
+            "stop_loss_pct": (0.005, 0.03), "take_profit_pct": (0.01, 0.06),
+            "vol_ratio_min": (0.3, 2.0),
         },
         "breakdown_short": {
             "lookback": (10, 40), "vol_ratio_min": (0.8, 3.0), "atr_period": (10, 20),

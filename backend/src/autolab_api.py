@@ -221,7 +221,8 @@ def get_context(
         # Top N resultados OOS — diversificados por estrategia
         # Cada estrategia obtiene al menos per_strategy slots para evitar
         # que una sola estrategia domine el contexto y sesgue al LLM.
-        strategies = ["vwap_pullback", "breakout", "mean_reversion", "ema_crossover"]
+        strategies = ["vwap_pullback", "breakout", "mean_reversion", "ema_crossover",
+                      "breakdown_short", "breakdown", "retest", "hibrido", "funding_reversion"]
         per_strategy = max(3, top_n // len(strategies))
         union_parts = []
         for strat in strategies:
@@ -259,6 +260,11 @@ def get_context(
             "vwap_pullback": {"sl_atr_mult","trail_atr_mult","adx_filter","vol_ratio_min","breakeven_after_r","ema_trend_period","ema_trend_daily_period"},
             "mean_reversion": {"rsi_period","rsi_oversold","bb_period","bb_std","atr_period","sl_atr_mult","ema_trend_period","breakeven_after_r","max_hold_bars"},
             "ema_crossover": {"sl_atr_mult","trail_atr_mult","adx_filter","vol_ratio_min","breakeven_after_r","ema_trend_period","ema_trend_daily_period"},
+            "breakdown_short": {"lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r"},
+            "breakdown": {"lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r"},
+            "retest": {"lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r","max_retest_bars"},
+            "hibrido": {"lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r","max_retest_bars","max_hold_bars"},
+            "funding_reversion": {"sl_atr_mult","trail_atr_mult","max_hold_bars","min_neg_streak","adx_filter","breakeven_after_r","ema_trend_period","ema_macro_period"},
         }
         top_results = []
         for row in top_results_raw:
@@ -843,14 +849,15 @@ async def analyze():
         "Top resultados:\n" + json.dumps(top_results) +
         "\n\nLearnings:\n" + json.dumps(learnings) +
         "\n\nDirectivas Opus:\n" + json.dumps(ctx["opus_insights"]) +
-        "\n\nAnalizá patrones. Estrategias válidas: breakout, vwap_pullback, mean_reversion. "
+        "\n\nAnalizá patrones. Estrategias válidas: breakout, vwap_pullback, mean_reversion, "
+        "ema_crossover (1h timeframe, fue primer campeón), breakdown_short (shorts), retest (pullback post-breakout). "
         "Considerá los params del campeón como punto de partida — explorá variaciones que puedan superarlo. "
         "IMPORTANTE: Si el campeón lleva muchos ciclos sin ser superado, priorizá exploración diversa "
         "(otras estrategias, rangos de params más amplios) sobre micro-optimización del campeón.\n"
         "Respondé con JSON COMPACTO (máx 5 items por lista, cada item es un string corto de 1 línea):\n"
         "{\"patterns_positive\": [\"...\"], \"patterns_negative\": [\"...\"], "
         "\"parameter_insights\": [\"...\"], \"suggested_direction\": \"...\", "
-        "\"strategies_to_prioritize\": [\"breakout\", \"vwap_pullback\", \"mean_reversion\"]}"
+        "\"strategies_to_prioritize\": [\"breakout\", \"vwap_pullback\", \"mean_reversion\", \"ema_crossover\", \"breakdown_short\", \"retest\"]}"
     )
     try:
         raw = await _call_llm(prompt, "Sos un analista cuantitativo senior de backtesting BTC/USDT. Respondé SIEMPRE en JSON válido sin texto adicional.", max_tokens=2048, model=LLM_MODEL_ANALYSIS)
@@ -1002,8 +1009,8 @@ async def hypothesize():
         "Análisis previo:\n" + json.dumps(analysis) +
         champion_section +
         external_section +
-        "\n\nGenerá 5-8 experimentos para backtesting BTC/USDT. "
-        "Estrategias disponibles: breakout, vwap_pullback, mean_reversion.\n"
+        "\n\nGenerá 6-10 experimentos para backtesting BTC/USDT. "
+        "Estrategias disponibles: breakout, vwap_pullback, mean_reversion, ema_crossover, breakdown_short, retest.\n"
         "IMPORTANTE: Usá SOLO los params listados abajo. No inventés params que no estén en la lista.\n"
         "breakout params: lookback(10-40), vol_ratio_min(0.8-3.0), atr_period(10-20), "
         "sl_atr_mult(0.75-4.0), trail_atr_mult(1.5-4.0), ema_trend_period(10-50), "
@@ -1014,7 +1021,17 @@ async def hypothesize():
         "mean_reversion params: rsi_period(7-21), rsi_oversold(25-40), bb_period(14-30), "
         "bb_std(1.5-3.0), atr_period(7-21), sl_atr_mult(1.5-3.0), "
         "ema_trend_period(20-200), breakeven_after_r(0=disabled, 0.5-1.0), max_hold_bars(10-40).\n"
-        "Incluí al menos 2-3 experimentos de mean_reversion y 1-2 de breakout para diversificar.\n"
+        "ema_crossover params (timeframe 1h!): sl_atr_mult(1.0-3.5), trail_atr_mult(1.5-4.0), "
+        "adx_filter(0-35), vol_ratio_min(0.5-3.0), breakeven_after_r(0=disabled, 0.5-1.5), "
+        "ema_trend_period(10-80), ema_trend_daily_period(15-60). Fue el PRIMER campeón ($309).\n"
+        "breakdown_short params (shorts!): lookback(10-40), vol_ratio_min(0.8-3.0), atr_period(10-20), "
+        "sl_atr_mult(0.75-4.0), trail_atr_mult(1.5-4.0), ema_trend_period(10-50), "
+        "ema_trend_daily_period(15-60), adx_filter(0-35), breakeven_after_r(0=disabled, 0.5-1.5).\n"
+        "retest params: lookback(10-40), vol_ratio_min(0.8-3.0), atr_period(10-20), "
+        "sl_atr_mult(0.75-4.0), trail_atr_mult(1.5-4.0), ema_trend_period(10-50), "
+        "ema_trend_daily_period(15-60), adx_filter(0-35), breakeven_after_r(0=disabled, 0.5-1.5), "
+        "max_retest_bars(3-10).\n"
+        "Diversificá: incluí al menos 2 ema_crossover, 1-2 breakdown_short, 1 retest, y 1-2 de las demás.\n"
         "Respondé SOLO con JSON: {experiments: [{strategy, params, notes}]}"
     )
     try:
@@ -1030,6 +1047,9 @@ async def hypothesize():
         "breakout": ["lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r"],
         "vwap_pullback": ["sl_atr_mult","trail_atr_mult","adx_filter","vol_ratio_min","breakeven_after_r","ema_trend_period","ema_trend_daily_period"],
         "mean_reversion": ["rsi_period","rsi_oversold","bb_period","bb_std","atr_period","sl_atr_mult","ema_trend_period"],
+        "ema_crossover": ["sl_atr_mult","trail_atr_mult","adx_filter","vol_ratio_min","ema_trend_period","ema_trend_daily_period"],
+        "breakdown_short": ["lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r"],
+        "retest": ["lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r","max_retest_bars"],
     }
     VALID_RANGES = {
         "breakout": {
@@ -1043,6 +1063,25 @@ async def hypothesize():
             "adx_filter": (0, 35), "vol_ratio_min": (0.8, 3.0),
             "breakeven_after_r": (0, 1.5), "ema_trend_period": (10, 50),
             "ema_trend_daily_period": (15, 60),
+        },
+        "ema_crossover": {
+            "sl_atr_mult": (1.0, 3.5), "trail_atr_mult": (1.5, 4.0),
+            "adx_filter": (0, 35), "vol_ratio_min": (0.5, 3.0),
+            "breakeven_after_r": (0, 1.5), "ema_trend_period": (10, 80),
+            "ema_trend_daily_period": (15, 60),
+        },
+        "breakdown_short": {
+            "lookback": (10, 40), "vol_ratio_min": (0.8, 3.0), "atr_period": (10, 20),
+            "sl_atr_mult": (0.75, 4.0), "trail_atr_mult": (1.5, 4.0),
+            "ema_trend_period": (10, 50), "ema_trend_daily_period": (15, 60),
+            "adx_filter": (0, 35), "breakeven_after_r": (0, 1.5),
+        },
+        "retest": {
+            "lookback": (10, 40), "vol_ratio_min": (0.8, 3.0), "atr_period": (10, 20),
+            "sl_atr_mult": (0.75, 4.0), "trail_atr_mult": (1.5, 4.0),
+            "ema_trend_period": (10, 50), "ema_trend_daily_period": (15, 60),
+            "adx_filter": (0, 35), "breakeven_after_r": (0, 1.5),
+            "max_retest_bars": (3, 10),
         },
         "mean_reversion": {
             "rsi_period": (7, 21), "rsi_oversold": (25, 40),

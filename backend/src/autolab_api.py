@@ -2250,6 +2250,57 @@ def metrics_system():
 
 ACTIVE_SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT"]
 
+
+@app.post("/admin/fix-legacy-symbols")
+def admin_fix_legacy_symbols():
+    """
+    Corrige runs legacy que tienen symbol incorrecto.
+    Todos los runs anteriores a la feature multi-moneda usaban BTC candles,
+    pero algunos tenían symbol='ETHUSDT' por herencia del experiments table.
+    Este endpoint los corrige a 'BTCUSDT'.
+    """
+    try:
+        conn = get_sqlite()
+        cur = conn.cursor()
+
+        # Count affected runs
+        cur.execute("SELECT symbol, COUNT(*) as cnt FROM runs GROUP BY symbol")
+        before = {r["symbol"]: r["cnt"] for r in cur.fetchall()}
+
+        # Fix: all runs before multi-coin feature should be BTCUSDT
+        # We identify them by: any run where the experiment's symbol doesn't match
+        # OR simpler: set all non-BTCUSDT runs to BTCUSDT if they were created before 2026-04-12
+        cur.execute("""
+            UPDATE runs SET symbol = 'BTCUSDT'
+            WHERE symbol != 'BTCUSDT'
+              AND created_at < '2026-04-12'
+        """)
+        fixed_runs = cur.rowcount
+
+        cur.execute("""
+            UPDATE experiments SET symbol = 'BTCUSDT'
+            WHERE symbol != 'BTCUSDT'
+              AND symbol != ''
+              AND finished_at < '2026-04-12'
+        """)
+        fixed_experiments = cur.rowcount
+
+        conn.commit()
+
+        cur.execute("SELECT symbol, COUNT(*) as cnt FROM runs GROUP BY symbol")
+        after = {r["symbol"]: r["cnt"] for r in cur.fetchall()}
+
+        conn.close()
+        return {
+            "before": before,
+            "after": after,
+            "fixed_runs": fixed_runs,
+            "fixed_experiments": fixed_experiments,
+        }
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
 @app.post("/admin/download-candles")
 async def admin_download_candles(
     symbol: str = Query("ETHUSDT"),

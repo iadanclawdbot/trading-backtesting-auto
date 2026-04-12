@@ -1,6 +1,7 @@
 "use client";
 
 import { useStatus, useApiContext, useHealth } from "@/hooks/use-api";
+import { useCoin, COINS } from "@/context/coin-context";
 import { SystemHealth } from "@/components/dashboard/system-health";
 import { ChampionCard } from "@/components/dashboard/champion-card";
 import { QueueStatus } from "@/components/dashboard/queue-status";
@@ -127,10 +128,11 @@ function KPIRow() {
   );
 }
 
-/* ─── Topbar with cycle info ─────────────────────────────── */
+/* ─── Topbar with coin selector + cycle info ────────────── */
 function Topbar() {
   const { data: health } = useHealth();
   const { data: status } = useStatus();
+  const { coin, setCoin } = useCoin();
   const isOk = health?.status === "ok";
   const champion = status?.champion;
   const strat = champion ? getStrategy(champion.strategy) : null;
@@ -138,10 +140,26 @@ function Topbar() {
 
   return (
     <div className="flex items-center justify-between px-5 py-2 border-b border-[var(--color-border)] bg-[var(--color-bg)] sticky top-0 z-10">
-      <div className="flex items-center gap-2 num text-[12px] text-[var(--color-text-2)]">
-        <span>Overview</span>
-        <span className="text-[var(--color-text-0)] font-medium">
-          / exp #{formatNumber(status?.queue?.done ?? 0)}
+      <div className="flex items-center gap-3">
+        {/* Coin selector */}
+        <div className="flex items-center gap-1 bg-[var(--color-surface-1)] rounded-lg p-0.5">
+          {COINS.map((c) => (
+            <button
+              key={c.symbol}
+              onClick={() => setCoin(c.symbol)}
+              className={`px-2.5 py-1 text-[11px] num rounded-md transition-all ${
+                coin === c.symbol
+                  ? "bg-[var(--color-surface-3)] text-[var(--color-text-0)] font-medium shadow-sm"
+                  : "text-[var(--color-text-2)] hover:text-[var(--color-text-1)]"
+              }`}
+              style={coin === c.symbol ? { color: c.color } : undefined}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+        <span className="num text-[11px] text-[var(--color-text-2)]">
+          exp #{formatNumber(status?.queue?.done ?? 0)}
         </span>
       </div>
       <div className="flex items-center gap-3">

@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import "./globals.css";
 import { SWRProvider } from "./swr-provider";
 import { ThemeProvider } from "@/components/layout/theme-provider";
+import { CoinProvider } from "@/context/coin-context";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 
@@ -40,6 +41,7 @@ export default function RootLayout({
       <body className="h-full overflow-hidden">
         <SWRProvider>
           <ThemeProvider>
+          <CoinProvider>
             <div className="flex h-full">
               {/* Sidebar desktop */}
               <Sidebar />
@@ -52,6 +54,7 @@ export default function RootLayout({
 
             {/* Nav mobile — bottom */}
             <MobileNav />
+          </CoinProvider>
           </ThemeProvider>
         </SWRProvider>
       </body>

@@ -160,13 +160,13 @@ class SaveOpusInsightsRequest(BaseModel):
 # ==============================================================================
 
 @app.get("/status")
-def get_status():
-    """Estado general del sistema."""
+def get_status(symbol: str = Query("BTCUSDT")):
+    """Estado general del sistema, filtrado por symbol."""
     try:
         conn = get_sqlite()
         cur = conn.cursor()
 
-        # Queue status
+        # Queue status (global — no depende de symbol)
         cur.execute("""
             SELECT status, COUNT(*) as cnt
             FROM experiments
@@ -174,19 +174,20 @@ def get_status():
         """)
         queue = {row["status"]: row["cnt"] for row in cur.fetchall()}
 
-        # Benchmark: mejor run OOS real (excluye WR=100% — artefacto breakeven_after_r=0)
+        # Benchmark: mejor run OOS real para este symbol
         cur.execute("""
             SELECT strategy, sharpe_ratio, total_trades, win_rate, max_drawdown, created_at
             FROM runs
             WHERE dataset = 'valid' AND total_trades >= 15
               AND (win_rate IS NULL OR win_rate < 95.0)
+              AND symbol = ?
             ORDER BY sharpe_ratio DESC
             LIMIT 1
-        """)
+        """, (symbol,))
         best = cur.fetchone()
         conn.close()
 
-        champion = _get_champion()
+        champion = _get_champion(symbol)
 
         return {
             "status": "ok",
@@ -211,6 +212,7 @@ def get_status():
 def get_context(
     top_n: int = Query(20, description="Top N resultados históricos"),
     last_cycle_batch: Optional[str] = Query(None, description="batch_id del ciclo anterior"),
+    symbol: str = Query("BTCUSDT", description="Filtrar por símbolo"),
 ):
     """
     Contexto completo para el brain LLM.
@@ -242,6 +244,7 @@ def get_context(
                     WHERE r.dataset = 'valid' AND r.total_trades >= 15
                       AND (r.win_rate IS NULL OR r.win_rate < 95.0)
                       AND r.strategy = '{strat}'
+                      AND r.symbol = '{symbol}'
                     ORDER BY r.capital_final DESC
                     LIMIT {per_strategy}
                 )
@@ -609,15 +612,18 @@ def _ensure_session_state_table():
     conn.close()
 
 
-def _get_champion() -> dict | None:
-    """Retorna el campeón actual (mayor capital_final histórico en valid, min 15 trades)."""
+def _get_champion(symbol: str = "BTCUSDT") -> dict | None:
+    """Retorna el campeón actual para un symbol (mayor capital_final histórico en valid, min 15 trades)."""
     try:
         _ensure_session_state_table()
         conn = get_sqlite()
-        # Primero intentar desde tabla champions
-        row = conn.execute(
-            "SELECT * FROM champions ORDER BY capital_final DESC LIMIT 1"
-        ).fetchone()
+        # Primero intentar desde tabla champions, filtrado por symbol via runs
+        row = conn.execute("""
+            SELECT c.* FROM champions c
+            JOIN runs r ON c.run_id = r.run_id
+            WHERE r.symbol = ?
+            ORDER BY c.capital_final DESC LIMIT 1
+        """, (symbol,)).fetchone()
         if row:
             conn.close()
             return dict(row)
@@ -626,10 +632,10 @@ def _get_champion() -> dict | None:
             SELECT run_id, strategy, params_json, capital_final, pnl_pct,
                    sharpe_ratio, total_trades, win_rate, max_drawdown
             FROM runs
-            WHERE dataset = 'valid' AND total_trades >= 15
+            WHERE dataset = 'valid' AND total_trades >= 15 AND symbol = ?
             ORDER BY capital_final DESC
             LIMIT 1
-        """).fetchone()
+        """, (symbol,)).fetchone()
         if row:
             # Seed automático: insertar el mejor run histórico como primer campeón
             try:
@@ -1875,14 +1881,17 @@ def delete_contaminated_runs():
 # ==============================================================================
 
 @app.get("/metrics/equity-curve")
-def metrics_equity_curve(run_id: Optional[str] = Query(None, description="run_id del run. Si no se pasa, usa el campeón actual.")):
+def metrics_equity_curve(
+    run_id: Optional[str] = Query(None, description="run_id del run. Si no se pasa, usa el campeón actual."),
+    symbol: str = Query("BTCUSDT", description="Símbolo para auto-seleccionar campeón"),
+):
     """Curva de equity (candle_states) de un run específico o del campeón."""
     try:
-        # Si no se pasa run_id, usar el del campeón actual
+        # Si no se pasa run_id, usar el del campeón para ese symbol
         if not run_id:
-            champ = _get_champion()
+            champ = _get_champion(symbol)
             if not champ:
-                return {"run_id": None, "strategy": None, "points": [], "message": "Sin campeón activo"}
+                return {"run_id": None, "strategy": None, "points": [], "message": f"Sin campeón activo para {symbol}"}
             run_id = champ["run_id"]
 
         conn = get_sqlite()
@@ -1925,18 +1934,20 @@ def metrics_equity_curve(run_id: Optional[str] = Query(None, description="run_id
 
 
 @app.get("/metrics/champion-history")
-def metrics_champion_history():
-    """Historial de campeones coronados — timeline de mejoras."""
+def metrics_champion_history(symbol: str = Query("BTCUSDT")):
+    """Historial de campeones coronados — timeline de mejoras, filtrado por symbol."""
     try:
         _ensure_session_state_table()
         conn = get_sqlite()
         cur = conn.cursor()
         cur.execute("""
-            SELECT id, promoted_at, run_id, strategy, capital_final, pnl_pct,
-                   sharpe_ratio, total_trades, win_rate, max_drawdown
-            FROM champions
-            ORDER BY promoted_at ASC
-        """)
+            SELECT c.id, c.promoted_at, c.run_id, c.strategy, c.capital_final, c.pnl_pct,
+                   c.sharpe_ratio, c.total_trades, c.win_rate, c.max_drawdown
+            FROM champions c
+            JOIN runs r ON c.run_id = r.run_id
+            WHERE r.symbol = ?
+            ORDER BY c.promoted_at ASC
+        """, (symbol,))
         rows = cur.fetchall()
         conn.close()
         return {

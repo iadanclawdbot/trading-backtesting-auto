@@ -12,13 +12,11 @@ import {
   createSeriesMarkers,
 } from "lightweight-charts";
 import { useCandles } from "@/hooks/use-api";
+import { useCoin } from "@/context/coin-context";
 import { TooltipHelp } from "./tooltip-help";
 
 type TF = "4h" | "1h";
 type DS = "train" | "valid";
-type COIN = "BTCUSDT" | "ETHUSDT" | "SOLUSDT";
-const COINS: COIN[] = ["BTCUSDT", "ETHUSDT", "SOLUSDT"];
-
 export function CandlestickChart() {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -27,7 +25,7 @@ export function CandlestickChart() {
   const markersRef = useRef<any>(null);
   const [timeframe, setTimeframe] = useState<TF>("4h");
   const [dataset, setDataset] = useState<DS>("valid");
-  const [coin, setCoin] = useState<COIN>("BTCUSDT");
+  const { coin, coinLabel } = useCoin();
 
   const { data, isLoading } = useCandles(timeframe, dataset, 3000, coin);
 
@@ -159,7 +157,7 @@ export function CandlestickChart() {
       {/* Row 1: title + price */}
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-1.5">
-          <span className="lbl">{coin.replace("USDT", "")}/USDT</span>
+          <span className="lbl">{coinLabel}/USDT</span>
           <TooltipHelp
             term="Candles"
             text="Velas OHLCV reales de la DB de backtesting. Las flechas marcan entradas (verde) y salidas (verde=WIN, rojo=LOSS) del campeon actual."
@@ -180,12 +178,6 @@ export function CandlestickChart() {
       </div>
       {/* Row 2: toggles */}
       <div className="flex items-center gap-1 mb-2 flex-wrap">
-        {COINS.map((c) => (
-          <button key={c} onClick={() => setCoin(c)} className={toggleClass(coin === c)}>
-            {c.replace("USDT", "")}
-          </button>
-        ))}
-        <span className="text-[var(--color-text-2)] text-[10px] mx-0.5">|</span>
         {(["valid", "train"] as DS[]).map((d) => (
           <button key={d} onClick={() => setDataset(d)} className={toggleClass(dataset === d)}>
             {d}

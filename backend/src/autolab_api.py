@@ -39,12 +39,13 @@ from typing import Optional
 import httpx
 import psycopg2
 import psycopg2.extras
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Query, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 NVIDIA_API_KEY = os.environ.get("NVIDIA_API_KEY", "")
 BRAVE_API_KEY  = os.environ.get("BRAVE_API_KEY", "BSARE2iLVLyolqmdJ8NpT8mt2PfTuKB")
+AUTOLAB_API_KEY = os.environ.get("AUTOLAB_API_KEY", "")
 
 # Paths — ajustar según estructura del servidor
 SQLITE_DB_PATH = os.environ.get("SQLITE_DB_PATH", "/app/data/coco_lab.db")
@@ -91,6 +92,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ==============================================================================
+# AUTH — API Key para endpoints de escritura (POST)
+# GET endpoints quedan públicos para el dashboard frontend
+# ==============================================================================
+
+def verify_api_key(request: Request):
+    """Verifica X-API-Key header en endpoints POST/admin."""
+    if not AUTOLAB_API_KEY:
+        return  # Si no hay key configurada, no bloquear (backward compatible)
+    key = request.headers.get("X-API-Key", "")
+    if key != AUTOLAB_API_KEY:
+        raise HTTPException(401, "API key inválida o ausente. Header requerido: X-API-Key")
 
 
 # ==============================================================================
@@ -365,7 +380,7 @@ def get_cycle_results(batch_id: str = Query(...)):
 # ENDPOINTS — EXPERIMENTOS
 # ==============================================================================
 
-@app.post("/experiments")
+@app.post("/experiments", dependencies=[Depends(verify_api_key)])
 def queue_experiments(req: QueueExperimentsRequest):
     """Encola N experimentos en la tabla experiments de coco_lab.db."""
     try:
@@ -400,7 +415,7 @@ def queue_experiments(req: QueueExperimentsRequest):
         raise HTTPException(500, str(e))
 
 
-@app.post("/run-pipeline")
+@app.post("/run-pipeline", dependencies=[Depends(verify_api_key)])
 async def run_pipeline(request: Request):
     """
     Ejecuta pipeline_runner.py de forma sincrónica.
@@ -497,7 +512,7 @@ def get_learnings(category: Optional[str] = None, limit: int = 50):
         raise HTTPException(500, str(e))
 
 
-@app.post("/learnings")
+@app.post("/learnings", dependencies=[Depends(verify_api_key)])
 def save_learnings(req: SaveLearningsRequest):
     """Guarda learnings en PostgreSQL."""
     try:
@@ -539,7 +554,7 @@ def get_opus_insights(limit: int = 10):
         raise HTTPException(500, str(e))
 
 
-@app.post("/opus-insights")
+@app.post("/opus-insights", dependencies=[Depends(verify_api_key)])
 def save_opus_insights(req: SaveOpusInsightsRequest):
     """Guarda insights de Opus (endpoint para uso manual desde Claude Code)."""
     try:
@@ -802,7 +817,7 @@ def _parse_json_from_llm(text: str) -> dict:
     raise ValueError(f"No se pudo parsear JSON. Primeros 300 chars: {text[:300]}")
 
 
-@app.post("/analyze")
+@app.post("/analyze", dependencies=[Depends(verify_api_key)])
 async def analyze():
     """
     Lee contexto, llama al LLM para analizar patrones,
@@ -908,7 +923,7 @@ async def analyze():
     return {"analysis": analysis, "status": "saved", "champion": champion}
 
 
-@app.post("/hypothesize")
+@app.post("/hypothesize", dependencies=[Depends(verify_api_key)])
 async def hypothesize():
     """
     Lee el último análisis de session_state, genera experimentos con el LLM,
@@ -1207,7 +1222,7 @@ async def hypothesize():
     }
 
 
-@app.post("/learn")
+@app.post("/learn", dependencies=[Depends(verify_api_key)])
 async def learn():
     """
     Lee los resultados más recientes de SQLite, llama al LLM para extraer learnings
@@ -1471,7 +1486,7 @@ async def learn():
     }
 
 
-@app.post("/daily-research")
+@app.post("/daily-research", dependencies=[Depends(verify_api_key)])
 async def daily_research():
     """
     Daily Research autónomo — reemplaza el workflow n8n complejo.
@@ -1718,7 +1733,7 @@ async def daily_research():
 # ENDPOINT — CHAT INTERACTIVO (Telegram → LLM con contexto completo de DB)
 # ==============================================================================
 
-@app.post("/chat")
+@app.post("/chat", dependencies=[Depends(verify_api_key)])
 async def chat(request: Request):
     """
     Chat interactivo con acceso completo a la base de datos.
@@ -1848,7 +1863,7 @@ async def chat(request: Request):
 
 
 # Legacy endpoint kept for backward compat — forward to /learn
-@app.post("/learn-legacy")
+@app.post("/learn-legacy", dependencies=[Depends(verify_api_key)])
 async def learn_legacy(request: Request):
     """Backward compat — llama a /learn internamente."""
     return await learn()
@@ -2267,7 +2282,7 @@ def metrics_system():
 ACTIVE_SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT"]
 
 
-@app.post("/admin/fix-legacy-symbols")
+@app.post("/admin/fix-legacy-symbols", dependencies=[Depends(verify_api_key)])
 def admin_fix_legacy_symbols():
     """
     Corrige runs legacy que tienen symbol incorrecto.
@@ -2317,7 +2332,7 @@ def admin_fix_legacy_symbols():
         raise HTTPException(500, str(e))
 
 
-@app.post("/admin/download-candles")
+@app.post("/admin/download-candles", dependencies=[Depends(verify_api_key)])
 async def admin_download_candles(
     symbol: str = Query("ETHUSDT"),
     timeframe: str = Query("4h"),

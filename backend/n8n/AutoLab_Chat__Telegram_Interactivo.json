@@ -1,5 +1,5 @@
 {
-    "updatedAt": "2026-03-30T19:48:01.593Z",
+    "updatedAt": "2026-04-12T18:12:25.357Z",
     "createdAt": "2026-03-25T20:25:08.202Z",
     "id": "hANSvWyqiH6KpYxi",
     "name": "AutoLab Chat \u2014 Telegram Interactivo",
@@ -38,8 +38,8 @@
                 "headerParameters": {
                     "parameters": [
                         {
-                            "name": "Content-Type",
-                            "value": "application/json"
+                            "name": "X-API-Key",
+                            "value": "={{ $env.AUTOLAB_API_KEY }}"
                         }
                     ]
                 },
@@ -121,9 +121,9 @@
     "staticData": null,
     "meta": null,
     "pinData": {},
-    "versionId": "9aaa6633-9a38-4460-8a90-61350e164557",
-    "activeVersionId": "9aaa6633-9a38-4460-8a90-61350e164557",
-    "versionCounter": 32,
+    "versionId": "f0c0a975-41f5-4481-8eba-63dfc99efece",
+    "activeVersionId": "f0c0a975-41f5-4481-8eba-63dfc99efece",
+    "versionCounter": 35,
     "triggerCount": 1,
     "shared": [
         {
@@ -146,9 +146,9 @@
     ],
     "tags": [],
     "activeVersion": {
-        "updatedAt": "2026-03-26T04:55:11.765Z",
-        "createdAt": "2026-03-26T04:55:06.773Z",
-        "versionId": "9aaa6633-9a38-4460-8a90-61350e164557",
+        "updatedAt": "2026-04-12T18:12:25.359Z",
+        "createdAt": "2026-04-12T18:12:25.359Z",
+        "versionId": "f0c0a975-41f5-4481-8eba-63dfc99efece",
         "workflowId": "hANSvWyqiH6KpYxi",
         "nodes": [
             {
@@ -182,8 +182,8 @@
                     "headerParameters": {
                         "parameters": [
                             {
-                                "name": "Content-Type",
-                                "value": "application/json"
+                                "name": "X-API-Key",
+                                "value": "={{ $env.AUTOLAB_API_KEY }}"
                             }
                         ]
                     },
@@ -257,15 +257,23 @@
             }
         },
         "authors": "Dante Lujan",
-        "name": "Version 9aaa6633",
-        "description": "",
-        "autosaved": true,
+        "name": null,
+        "description": null,
+        "autosaved": false,
         "workflowPublishHistory": [
             {
-                "createdAt": "2026-03-26T04:55:11.763Z",
-                "id": 187,
+                "createdAt": "2026-04-12T18:12:26.012Z",
+                "id": 240,
                 "workflowId": "hANSvWyqiH6KpYxi",
-                "versionId": "9aaa6633-9a38-4460-8a90-61350e164557",
+                "versionId": "f0c0a975-41f5-4481-8eba-63dfc99efece",
+                "event": "deactivated",
+                "userId": "bc8b7699-d048-48bc-8db3-36d2bb5c3b65"
+            },
+            {
+                "createdAt": "2026-04-12T18:12:27.326Z",
+                "id": 241,
+                "workflowId": "hANSvWyqiH6KpYxi",
+                "versionId": "f0c0a975-41f5-4481-8eba-63dfc99efece",
                 "event": "activated",
                 "userId": "bc8b7699-d048-48bc-8db3-36d2bb5c3b65"
             }

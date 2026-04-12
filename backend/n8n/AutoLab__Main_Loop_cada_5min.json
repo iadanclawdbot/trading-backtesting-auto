@@ -1,5 +1,5 @@
 {
-    "updatedAt": "2026-04-11T21:51:38.218Z",
+    "updatedAt": "2026-04-12T18:12:06.260Z",
     "createdAt": "2026-03-24T19:19:03.456Z",
     "id": "RJgzeedKorHQOYRD",
     "name": "AutoLab \u2014 Main Loop (cada 5min)",
@@ -11,7 +11,16 @@
             "parameters": {
                 "method": "POST",
                 "url": "https://autolab-api.dantelujan.online/analyze",
-                "options": {}
+                "options": {},
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "X-API-Key",
+                            "value": "={{ $env.AUTOLAB_API_KEY }}"
+                        }
+                    ]
+                }
             },
             "id": "analyze-001",
             "name": "POST /analyze",
@@ -26,7 +35,16 @@
             "parameters": {
                 "method": "POST",
                 "url": "https://autolab-api.dantelujan.online/hypothesize",
-                "options": {}
+                "options": {},
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "X-API-Key",
+                            "value": "={{ $env.AUTOLAB_API_KEY }}"
+                        }
+                    ]
+                }
             },
             "id": "hypothesize-001",
             "name": "POST /hypothesize",
@@ -43,6 +61,15 @@
                 "url": "https://autolab-api.dantelujan.online/run-pipeline",
                 "options": {
                     "timeout": 600000
+                },
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "X-API-Key",
+                            "value": "={{ $env.AUTOLAB_API_KEY }}"
+                        }
+                    ]
                 }
             },
             "id": "pipeline-001",
@@ -58,7 +85,16 @@
             "parameters": {
                 "method": "POST",
                 "url": "https://autolab-api.dantelujan.online/learn",
-                "options": {}
+                "options": {},
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "X-API-Key",
+                            "value": "={{ $env.AUTOLAB_API_KEY }}"
+                        }
+                    ]
+                }
             },
             "id": "learn-001",
             "name": "POST /learn",
@@ -192,9 +228,9 @@
     },
     "meta": null,
     "pinData": {},
-    "versionId": "278e2c06-1e8b-4f40-bf82-dd652d67dee3",
-    "activeVersionId": "278e2c06-1e8b-4f40-bf82-dd652d67dee3",
-    "versionCounter": 182,
+    "versionId": "1009fbc7-e198-4a69-b0dc-0d68f7742043",
+    "activeVersionId": "1009fbc7-e198-4a69-b0dc-0d68f7742043",
+    "versionCounter": 185,
     "triggerCount": 1,
     "shared": [
         {
@@ -217,16 +253,25 @@
     ],
     "tags": [],
     "activeVersion": {
-        "updatedAt": "2026-04-11T21:51:44.098Z",
-        "createdAt": "2026-04-11T21:51:38.219Z",
-        "versionId": "278e2c06-1e8b-4f40-bf82-dd652d67dee3",
+        "updatedAt": "2026-04-12T18:12:06.261Z",
+        "createdAt": "2026-04-12T18:12:06.261Z",
+        "versionId": "1009fbc7-e198-4a69-b0dc-0d68f7742043",
         "workflowId": "RJgzeedKorHQOYRD",
         "nodes": [
             {
                 "parameters": {
                     "method": "POST",
                     "url": "https://autolab-api.dantelujan.online/analyze",
-                    "options": {}
+                    "options": {},
+                    "sendHeaders": true,
+                    "headerParameters": {
+                        "parameters": [
+                            {
+                                "name": "X-API-Key",
+                                "value": "={{ $env.AUTOLAB_API_KEY }}"
+                            }
+                        ]
+                    }
                 },
                 "id": "analyze-001",
                 "name": "POST /analyze",
@@ -241,7 +286,16 @@
                 "parameters": {
                     "method": "POST",
                     "url": "https://autolab-api.dantelujan.online/hypothesize",
-                    "options": {}
+                    "options": {},
+                    "sendHeaders": true,
+                    "headerParameters": {
+                        "parameters": [
+                            {
+                                "name": "X-API-Key",
+                                "value": "={{ $env.AUTOLAB_API_KEY }}"
+                            }
+                        ]
+                    }
                 },
                 "id": "hypothesize-001",
                 "name": "POST /hypothesize",
@@ -258,6 +312,15 @@
                     "url": "https://autolab-api.dantelujan.online/run-pipeline",
                     "options": {
                         "timeout": 600000
+                    },
+                    "sendHeaders": true,
+                    "headerParameters": {
+                        "parameters": [
+                            {
+                                "name": "X-API-Key",
+                                "value": "={{ $env.AUTOLAB_API_KEY }}"
+                            }
+                        ]
                     }
                 },
                 "id": "pipeline-001",
@@ -273,7 +336,16 @@
                 "parameters": {
                     "method": "POST",
                     "url": "https://autolab-api.dantelujan.online/learn",
-                    "options": {}
+                    "options": {},
+                    "sendHeaders": true,
+                    "headerParameters": {
+                        "parameters": [
+                            {
+                                "name": "X-API-Key",
+                                "value": "={{ $env.AUTOLAB_API_KEY }}"
+                            }
+                        ]
+                    }
                 },
                 "id": "learn-001",
                 "name": "POST /learn",
@@ -385,15 +457,23 @@
             }
         },
         "authors": "Dante Lujan",
-        "name": "Version 278e2c06",
-        "description": "",
-        "autosaved": true,
+        "name": null,
+        "description": null,
+        "autosaved": false,
         "workflowPublishHistory": [
             {
-                "createdAt": "2026-04-11T21:51:44.096Z",
-                "id": 235,
+                "createdAt": "2026-04-12T18:12:06.311Z",
+                "id": 236,
                 "workflowId": "RJgzeedKorHQOYRD",
-                "versionId": "278e2c06-1e8b-4f40-bf82-dd652d67dee3",
+                "versionId": "1009fbc7-e198-4a69-b0dc-0d68f7742043",
+                "event": "deactivated",
+                "userId": "bc8b7699-d048-48bc-8db3-36d2bb5c3b65"
+            },
+            {
+                "createdAt": "2026-04-12T18:12:06.332Z",
+                "id": 237,
+                "workflowId": "RJgzeedKorHQOYRD",
+                "versionId": "1009fbc7-e198-4a69-b0dc-0d68f7742043",
                 "event": "activated",
                 "userId": "bc8b7699-d048-48bc-8db3-36d2bb5c3b65"
             }

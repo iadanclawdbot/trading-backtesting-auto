@@ -1,5 +1,5 @@
 {
-    "updatedAt": "2026-03-30T19:47:59.442Z",
+    "updatedAt": "2026-04-12T18:12:24.358Z",
     "createdAt": "2026-03-24T19:19:17.498Z",
     "id": "WOJji6MHwdrsbTI1",
     "name": "AutoLab \u2014 Daily Research (9am)",
@@ -33,6 +33,15 @@
                 "url": "https://autolab-api.dantelujan.online/daily-research",
                 "options": {
                     "timeout": 120000
+                },
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "X-API-Key",
+                            "value": "={{ $env.AUTOLAB_API_KEY }}"
+                        }
+                    ]
                 }
             },
             "id": "daily-research-001",
@@ -106,9 +115,9 @@
     },
     "meta": null,
     "pinData": {},
-    "versionId": "655b1430-c0fa-41d7-9e0d-73dbac936c09",
-    "activeVersionId": "655b1430-c0fa-41d7-9e0d-73dbac936c09",
-    "versionCounter": 67,
+    "versionId": "fdec4787-54c3-4859-984d-1ea0135811d5",
+    "activeVersionId": "fdec4787-54c3-4859-984d-1ea0135811d5",
+    "versionCounter": 70,
     "triggerCount": 1,
     "shared": [
         {
@@ -131,9 +140,9 @@
     ],
     "tags": [],
     "activeVersion": {
-        "updatedAt": "2026-03-26T07:28:45.055Z",
-        "createdAt": "2026-03-26T07:28:38.977Z",
-        "versionId": "655b1430-c0fa-41d7-9e0d-73dbac936c09",
+        "updatedAt": "2026-04-12T18:12:24.359Z",
+        "createdAt": "2026-04-12T18:12:24.359Z",
+        "versionId": "fdec4787-54c3-4859-984d-1ea0135811d5",
         "workflowId": "WOJji6MHwdrsbTI1",
         "nodes": [
             {
@@ -162,6 +171,15 @@
                     "url": "https://autolab-api.dantelujan.online/daily-research",
                     "options": {
                         "timeout": 120000
+                    },
+                    "sendHeaders": true,
+                    "headerParameters": {
+                        "parameters": [
+                            {
+                                "name": "X-API-Key",
+                                "value": "={{ $env.AUTOLAB_API_KEY }}"
+                            }
+                        ]
                     }
                 },
                 "id": "daily-research-001",
@@ -221,15 +239,23 @@
             }
         },
         "authors": "Dante Lujan",
-        "name": "Version 655b1430",
-        "description": "",
-        "autosaved": true,
+        "name": null,
+        "description": null,
+        "autosaved": false,
         "workflowPublishHistory": [
             {
-                "createdAt": "2026-03-26T07:28:45.052Z",
-                "id": 189,
+                "createdAt": "2026-04-12T18:12:24.392Z",
+                "id": 238,
                 "workflowId": "WOJji6MHwdrsbTI1",
-                "versionId": "655b1430-c0fa-41d7-9e0d-73dbac936c09",
+                "versionId": "fdec4787-54c3-4859-984d-1ea0135811d5",
+                "event": "deactivated",
+                "userId": "bc8b7699-d048-48bc-8db3-36d2bb5c3b65"
+            },
+            {
+                "createdAt": "2026-04-12T18:12:24.405Z",
+                "id": 239,
+                "workflowId": "WOJji6MHwdrsbTI1",
+                "versionId": "fdec4787-54c3-4859-984d-1ea0135811d5",
                 "event": "activated",
                 "userId": "bc8b7699-d048-48bc-8db3-36d2bb5c3b65"
             }

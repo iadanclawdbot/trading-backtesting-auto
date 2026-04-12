@@ -172,9 +172,7 @@ Hacer en orden. Bloquean todo lo demás.
   - Archivo: `backend/src/autolab_api.py`
 - [x] **Fix benchmark en `generar_batch_report.py`** — actualizado a campeón actual ✅ 2026-04-12
 - [x] **Re-exportar workflows n8n** — 3 workflows exportados desde API n8n ✅ 2026-04-12
-- [ ] **Autenticación en la API** — todos los endpoints son públicos
-
-  - Agregar `X-API-Key` header con FastAPI `Security()`
+- [x] **Autenticación en la API** — X-API-Key en 12 POST endpoints + 3 workflows n8n ✅ 2026-04-12
 
 ---
 

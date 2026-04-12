@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useMotionValue, useTransform, animate } from "motion/react";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 /* ─── Staggered section — fades in children sequentially ──── */
 
@@ -89,20 +89,33 @@ export function AnimatedNumber({
   duration?: number;
   className?: string;
 }) {
-  const ref = useRef<HTMLSpanElement>(null);
+  // If value is null/undefined, show "—" immediately without animation
+  if (value == null) {
+    return <span className={className}>—</span>;
+  }
+
+  return <AnimatedNumberInner value={value} format={format} duration={duration} className={className} />;
+}
+
+function AnimatedNumberInner({
+  value,
+  format,
+  duration,
+  className,
+}: {
+  value: number;
+  format: "number" | "currency" | "percent" | "sharpe";
+  duration: number;
+  className: string;
+}) {
   const motionVal = useMotionValue(0);
 
   useEffect(() => {
-    if (value == null) return;
-    const controls = animate(motionVal, value, {
-      duration,
-      ease: "easeOut",
-    });
+    const controls = animate(motionVal, value, { duration, ease: "easeOut" });
     return controls.stop;
   }, [value, duration, motionVal]);
 
   const display = useTransform(motionVal, (v) => {
-    if (value == null) return "—";
     switch (format) {
       case "currency":
         return `$${v.toFixed(v >= 1000 ? 0 : 2)}`;
@@ -116,7 +129,7 @@ export function AnimatedNumber({
   });
 
   return (
-    <motion.span ref={ref} className={className}>
+    <motion.span className={className}>
       {display}
     </motion.span>
   );

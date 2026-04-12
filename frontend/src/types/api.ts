@@ -99,9 +99,13 @@ export interface LearningsResponse {
 // OJO: devuelve { insights: [], count: N } — actualmente vacio
 export interface OpusInsight {
   id?: number;
+  insight_type?: string;
+  priority?: number;
+  title?: string;
   content?: string;
+  data_basis?: string;
   created_at?: string;
-  [key: string]: unknown;
+  expires_at?: string;
 }
 
 export interface OpusInsightsResponse {

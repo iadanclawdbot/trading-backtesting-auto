@@ -218,3 +218,6 @@ body {
 
 .animate-in { animation: fade-in 0.35s ease-out both; }
 .animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
+
+/* Hide TradingView branding from lightweight-charts */
+a[href*="tradingview"] { display: none !important; }

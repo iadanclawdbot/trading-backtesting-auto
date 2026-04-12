@@ -86,32 +86,39 @@ El campeón `vwap_pullback` ($338.30) llevaba 15 días sin ser superado (desde 2
 - AnimatedNumber: early return "—" para null (evita números stale)
 - Página /insights rediseñada: vista completa con expand all
 
-**Testing cross-coin completado:**
-- BTC desktop: datos correctos ✅
-- ETH desktop: KPIs "—", equity "sin campeón", candlestick ETH ✅
-- SOL desktop: KPIs "—", equity "sin campeón", candlestick SOL ✅
-- BTC→ETH→SOL→BTC: datos se restauran sin residuos ✅
-- ETH mobile: header selector, KPIs "—", layout correcto ✅
-- 0 errores de consola ✅
+**Multi-coin 100%** (commits `a19cda6`→`2becca2`):
+- `_maybe_crown_champion()`: corona per-symbol — cada moneda tiene su propio campeón
+- `/metrics/candles`: usa `_get_champion(symbol)` — no muestra trades BTC en velas ETH
+- `/learn`: incluye `symbol` en los datos para que el LLM distinga monedas
+- Candlestick markers: `setMarkers([])` limpia markers al cambiar coin (v5 API)
+- Fix contaminación legacy: 100 runs con symbol='ETHUSDT' corregidos a BTCUSDT
 
-**20 commits en esta sesión:**
-`0319b4e` → `35ef71f`
+**Testing final con Playwright (doble comprobación):**
+- BTC: KPIs con datos, candlestick con 19 trades markers ✅
+- ETH: KPIs "—", candlestick ETH $1K-$5K, **0 markers** ✅
+- SOL: KPIs "—", candlestick SOL $8-$260, 0 markers ✅
+- BTC→ETH→SOL→BTC: cambio instantáneo sin residuos ✅
+- Mobile ETH: selector, "—", "sin campeón" ✅
+- API: 0 contaminación cross-coin en todos los endpoints ✅
+- Consola: 0 errores ✅
+
+**25 commits en esta sesión:**
+`0319b4e` → `2becca2`
 
 ### Pendiente al cierre
 - [ ] 24-48h: confirmar diversidad en experiments y multi-coin en learnings
-- [ ] Campeón por moneda (Fase 5) — champion per symbol
 - [ ] Re-exportar workflows n8n
 - [ ] Autenticación en la API (X-API-Key)
 
 ### Estado del sistema al cierre
 | Componente | Estado |
 |------------|--------|
-| AutoLab API | ✅ UP — commit `35ef71f` deployado |
+| AutoLab API | ✅ UP — commit `2becca2` deployado |
 | GitHub repo | ✅ main al día — tag `pre-multicoin-backup` disponible |
-| Coolify | ✅ Deploy multi-moneda + fix contaminación |
-| Vercel | ✅ Coin selector BTC/ETH/SOL, 0 contaminación cross-coin verificada |
+| Coolify | ✅ Multi-moneda + per-symbol champion + 0 contaminación |
+| Vercel | ✅ Coin selector BTC/ETH/SOL verificado con Playwright |
 | Opus Insights | ✅ 17 insights publicados — plan mensual 4 semanas |
-| Champion (BTC) | `vwap_pullback` — $338.30 (+35.3%) — Sharpe 1.593 (15 días sin cambio) |
+| Champion (BTC) | `vwap_pullback` — $338.30 (+35.3%) — Sharpe 1.593 |
 | Champion (ETH) | Sin campeón — pendiente primeros experiments |
 | Champion (SOL) | Sin campeón — pendiente primeros experiments |
 | Estrategias | 6: breakout, vwap_pullback, mean_reversion, ema_crossover v2, breakdown_short, retest |

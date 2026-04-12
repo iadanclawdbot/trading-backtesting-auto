@@ -158,7 +158,9 @@ Hacer en orden. Bloquean todo lo demás.
   - SWR_COIN (keepPreviousData:false) vs SWR_GLOBAL (keepPreviousData:true)
   - AnimatedNumber: early return "—" para null
   - Testeado desktop+mobile: BTC→ETH→SOL→BTC — 0 contaminación
-- [ ] **Campeón por moneda** (Fase 5) — ALTER TABLE champions ADD symbol, comparar dentro del mismo symbol
+- [x] **Campeón por moneda** — `_maybe_crown_champion()` per-symbol (commit `a19cda6`) ✅ 2026-04-12
+- [x] **Fix candles markers cross-coin** — `setMarkers([])` al cambiar coin (commit `2becca2`) ✅ 2026-04-12
+- [x] **Fix candles champion trades** — `/metrics/candles` usa `_get_champion(symbol)` (commit `68ed09f`) ✅ 2026-04-12
 
 ---
 

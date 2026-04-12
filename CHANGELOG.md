@@ -5,10 +5,10 @@
 
 ---
 
-## 2026-04-12 — Fix estancamiento del ciclo autónomo (RCA-4 a RCA-7)
+## 2026-04-12 — Fix estancamiento + Opus Analyst + 6 estrategias nuevas
 
 ### Contexto
-El campeón `vwap_pullback` ($338.30) llevaba sin ser superado desde el 2026-04-06. Análisis reveló 0/20 ciclos beat benchmark, 49/50 resultados en `/context` eran vwap_pullback, y ghost params seguían en datos históricos. El sistema estaba en un loop de micro-optimización sin salida.
+El campeón `vwap_pullback` ($338.30) llevaba 15 días sin ser superado (desde 2026-03-28). Análisis reveló 0/20 ciclos beat benchmark, 49/50 resultados en `/context` eran vwap_pullback, ghost params en datos históricos, y 6 de 9 estrategias del motor completamente sin usar.
 
 ### Completado
 
@@ -27,9 +27,29 @@ El campeón `vwap_pullback` ($338.30) llevaba sin ser superado desde el 2026-04-
 | 6 | Ghost params en runs históricos contaminan LLM | Strip de params inválidos en output de `/context` y campeón en `/hypothesize` |
 | 7 | Sin detección de estancamiento | Staleness counter + 3 niveles de presión de exploración (normal/<10/>=20 ciclos) |
 
+**Opus Analyst — análisis estratégico profundo** (commit `d9b8b62`):
+
+6 insights publicados en `opus_insights` con prioridad 3-5:
+
+| # | Tipo | Prio | Insight |
+|---|------|------|---------|
+| 1 | dead_zone | 5 | vwap_pullback micro-optimización agotada — 12/12 top results idénticos |
+| 2 | direction | 5 | ema_crossover es la oportunidad más grande — primer campeón, params inexplorados |
+| 3 | hypothesis | 5 | Breakout con lookback alto (35-40) + stops amplios → Sharpe 1.3 |
+| 4 | direction | 4 | 6 estrategias del motor no están habilitadas en el loop |
+| 5 | hypothesis | 4 | mean_reversion genera muy pocos trades — relajar filtros RSI y Bollinger |
+| 6 | warning | 3 | LEFT JOIN en /context duplica resultados |
+
+**Estrategias habilitadas en /hypothesize** (commit `d9b8b62`):
+- `ema_crossover` — timeframe 1h, fue el primer campeón ($309)
+- `breakdown_short` — posiciones SHORT, cobertura bajista
+- `retest` — entrada en pullback post-breakout, menor drawdown
+- REQUIRED, VALID_RANGES, prompt y /context actualizados para 6 estrategias
+
 ### Pendiente al cierre
 - [ ] Verificar redeploy exitoso en Coolify
-- [ ] 24h después: confirmar diversidad en learnings y experiments
+- [ ] 24-48h después: confirmar que el loop genera experimentos de las nuevas estrategias
+- [ ] Fix LEFT JOIN duplicados en /context (warning insight #6)
 - [ ] Animaciones con Motion (frontend)
 - [ ] Candlestick chart con lightweight-charts
 
@@ -37,11 +57,13 @@ El campeón `vwap_pullback` ($338.30) llevaba sin ser superado desde el 2026-04-
 | Componente | Estado |
 |------------|--------|
 | AutoLab API | ✅ UP — sqlite y postgresql conectados |
-| GitHub repo | ✅ main al día — commit `0319b4e` |
-| Coolify | ⏳ Redeploy en proceso |
-| Champion | `vwap_pullback` — $338.30 (+35.3%) — Sharpe 1.593 |
-| Ciclo autónomo | 🔄 Fixes anti-estancamiento deployados — en observación |
-| Runs totales | 17,561 runs / 8,812 experiments / 423k trades |
+| GitHub repo | ✅ main al día — commit `d9b8b62` |
+| Coolify | ⏳ Redeploy en proceso (3 commits nuevos) |
+| Opus Insights | ✅ 6 insights publicados |
+| Champion | `vwap_pullback` — $338.30 (+35.3%) — Sharpe 1.593 (15 días sin cambio) |
+| Estrategias habilitadas | 6 (antes 3): +ema_crossover, +breakdown_short, +retest |
+| Ciclo autónomo | 🔄 Pendiente redeploy — diversidad forzada + exploración radical |
+| Runs totales | 17,561 runs / 8,812 experiments / 423k trades / DB 6.6 GB |
 
 ---
 

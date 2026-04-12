@@ -12,20 +12,22 @@
 
 | Componente                           | Estado                                        | Verificado |
 | ------------------------------------ | --------------------------------------------- | ---------- |
-| autolab-api (`/health`)              | ✅ UP — sqlite y postgresql conectados        | 2026-04-08 |
+| autolab-api (`/health`)              | ✅ UP — sqlite y postgresql conectados        | 2026-04-12 |
 | n8n Main Loop (30min)                | ⚪ No verificado                              | —          |
 | n8n Daily Research (9am)             | ✅ Cron `0 0 9 * * *` correcto                | 2026-04-08 |
 | n8n Chat Telegram                    | ⚪ No verificado                              | —          |
 | Supabase CHECK constraint            | ✅ Migración aplicada                         | 2026-04-08 |
 | GitHub repo creado                   | ✅ `iadanclawdbot/trading-backtesting-auto`   | 2026-04-07 |
-| Coolify apuntando a este repo        | ✅ Deployado — commit 948aca2                 | 2026-04-08 |
+| Coolify apuntando a este repo        | ✅ Redeploy con 6 estrategias nuevas          | 2026-04-12 |
 | Frontend dashboard (Vercel)          | ✅ 18 componentes, 9 endpoints, 3 páginas     | 2026-04-08 |
 | Backend /metrics/* endpoints         | ✅ 4 endpoints activos en producción           | 2026-04-12 |
-| Fixes estancamiento (3 RCAs)         | ✅ En producción desde deploy 2026-04-08      | 2026-04-08 |
-| Ciclo autónomo mejorando resultados  | 🔄 RCA-4 a RCA-7 aplicados — pendiente redeploy | 2026-04-12 |
+| Fixes estancamiento (RCA-1 a RCA-7)  | ✅ 7 RCAs resueltos — 6 estrategias habilitadas | 2026-04-12 |
+| Opus Insights                        | ✅ 6 insights publicados — guían próxima semana | 2026-04-12 |
+| Ciclo autónomo                       | 🔄 Pendiente redeploy con estrategias nuevas  | 2026-04-12 |
 
-**Campeón actual** (al 2026-04-08):
+**Campeón actual** (al 2026-04-12, sin cambio desde 2026-03-28):
 `vwap_pullback` | Capital: $338.30 (+35.3%) | Sharpe OOS: 1.593 | Trades: 19
+**Runs totales:** 17,561 | **Experiments:** 8,812 | **Trades:** 423,661 | **DB:** 6.6 GB
 
 ---
 
@@ -148,6 +150,8 @@ Hacer en orden. Bloquean todo lo demás.
 - [x] TASK.md como documento vivo de planificación
 - [x] Repo `iadanclawdbot/trading-backtesting-auto` creado y pusheado en GitHub (2026-04-07)
 - [x] Todos los archivos del repo actualizados para reflejar nueva estructura (2026-04-07)
+- [x] Fix estancamiento RCA-4 a RCA-7 (2026-04-12) — commit `0319b4e`
+- [x] Opus Analyst: 6 insights publicados + 6 estrategias habilitadas (2026-04-12) — commit `d9b8b62`
 
 ---
 

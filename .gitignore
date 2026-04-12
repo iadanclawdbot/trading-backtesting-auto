@@ -7,3 +7,7 @@ venv/
 backend/data/
 docs/*.secrets.md
 .ruff_cache/
+
+# Testing artifacts
+.playwright-mcp/
+*.png

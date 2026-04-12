@@ -2189,8 +2189,8 @@ def metrics_candles(
         rows = [dict(r) for r in cur.fetchall()]
         rows.reverse()  # cronológico
 
-        # Trades del campeón para overlay (opcional)
-        champion = _get_champion()
+        # Trades del campeón de ESTE symbol para overlay
+        champion = _get_champion(symbol)
         trades = []
         if champion:
             cur.execute("""

@@ -146,7 +146,8 @@ Hacer en orden. Bloquean todo lo demás.
 - [x] **Fix LEFT JOIN duplicados en /context** — subquery LIMIT 1 para sharpe_train ✅ 2026-04-12
 - [x] **Upgrade ema_crossover a ATR trailing** — nuevo motor `correr_backtest_ema_trailing` + `calcular_indicadores_ema_atr` ✅ 2026-04-12
 - [x] **Fix benchmark en generar_batch_report.py** — actualizado a vwap_pullback campeón ✅ 2026-04-12
-- [ ] **Verificar 24-48h post-deploy** — confirmar diversidad en experiments y learnings nuevos
+- [x] **Fix n8n Main Loop connections** — key `Cron 5min` → `Cron 15min`, workflow ejecutaba Cron y salía en 3ms ✅ 2026-04-14
+- [ ] **Verificar 24-48h post-fix n8n** — confirmar diversidad en experiments y learnings post-reactivación (desde 2026-04-14 12:00 UTC)
 - [x] **Backtesting multi-moneda** — ETH + SOL habilitados (commit `2484f6d`) ✅ 2026-04-12
   - ACTIVE_SYMBOLS = [BTCUSDT, ETHUSDT, SOLUSDT]
   - Velas descargadas: ETH 4h (4,740) + 1h (19,441) + SOL 4h (4,861) + 1h (19,441)

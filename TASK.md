@@ -2,7 +2,7 @@
 
 > Documento vivo de planificación. Revisar y actualizar en cada sesión.
 > Marcar `[x]` al completar. Agregar ítems nuevos cuando aparezcan.
-> Última actualización: 2026-04-12
+> Última actualización: 2026-04-16
 
 ---
 
@@ -12,13 +12,13 @@
 
 | Componente                           | Estado                                        | Verificado |
 | ------------------------------------ | --------------------------------------------- | ---------- |
-| autolab-api (`/health`)              | ✅ UP — sqlite y postgresql conectados        | 2026-04-12 |
-| n8n Main Loop                        | ✅ cada 15min (hasta lunes), luego 30min      | 2026-04-12 |
+| autolab-api (`/health`)              | ✅ UP — sqlite y postgresql conectados        | 2026-04-16 |
+| n8n Main Loop                        | ✅ cada 15min, ejecutándose correctamente     | 2026-04-16 |
 | n8n Daily Research (9am)             | ✅ Cron `0 0 9 * * *` correcto                | 2026-04-08 |
 | n8n Chat Telegram                    | ✅ activo                                      | 2026-04-12 |
 | Supabase CHECK constraint            | ✅ Migración aplicada                         | 2026-04-08 |
 | GitHub repo creado                   | ✅ `iadanclawdbot/trading-backtesting-auto`   | 2026-04-07 |
-| Coolify                              | ✅ Deploy final — commit `20cbda5`            | 2026-04-12 |
+| Coolify                              | ✅ Deploy final — commit `d164cd3`            | 2026-04-16 |
 | Frontend dashboard (Vercel)          | ✅ Coin selector global BTC/ETH/SOL, 0 contaminación | 2026-04-12 |
 | Backend /metrics/* endpoints         | ✅ 6 endpoints + admin + auth X-API-Key       | 2026-04-12 |
 | Fixes estancamiento (RCA-1 a RCA-7)  | ✅ 7 RCAs resueltos — 6 estrategias habilitadas | 2026-04-12 |
@@ -26,7 +26,7 @@
 | Multi-moneda                         | ✅ BTC + ETH + SOL — campeón independiente por coin | 2026-04-12 |
 | API auth (X-API-Key)                 | ✅ 12 POST endpoints + 3 workflows n8n         | 2026-04-12 |
 | n8n workflows exportados             | ✅ 3 workflows actualizados en backend/n8n/    | 2026-04-12 |
-| Ciclo autónomo                       | 🔄 Multi-coin cada 15min — generando experiments | 2026-04-12 |
+| Ciclo autónomo                       | ✅ Multi-coin + distribución 3-3-3 (BTC/ETH/SOL) | 2026-04-16 |
 
 **Campeones actuales** (al 2026-04-12 ~20:00):
 - **BTC**: `vwap_pullback` | $338.30 | Sharpe 1.593 | 19 trades

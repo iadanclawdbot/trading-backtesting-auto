@@ -5,6 +5,59 @@
 
 ---
 
+## 2026-04-16 — Verificación n8n + distribución balanceada 3-3-3
+
+### Contexto
+Sesión corta de mantenimiento post-fix. El 2026-04-14 se corrigió un bug crítico en n8n Main Loop (key incorrecto del Cron nodo). Necesitaba verificación de 24-48h post-fix y solicitud de balanceo en la distribución de experiments entre monedas (BTC/ETH/SOL).
+
+### Completado
+
+**Verificación del fix n8n** (2026-04-14 → 2026-04-16):
+- n8n Main Loop ejecutándose cada 15min consistentemente ✅
+  - Ciclos recientes: 05:45, 05:30, 05:15, 05:00, 04:45 (todos ~2 min de ejecución)
+- Endpoints `/analyze` → `/hypothesize` → `/run-pipeline` → `/learn` funcionan correctamente ✅
+- Último ciclo (BATCH_20260416_055447): 6 runs ejecutados, 4 learnings guardados en Supabase ✅
+- Cola de experiments: de 9939 → 9951 done (+12 nuevos) ✅
+- Sistema autónomo 24/7 operativo sin intervención humana ✅
+
+**Distribución balanceada 3-3-3 en `/hypothesize`** (commit `d164cd3`):
+- **Cambio 1 — Prompt al LLM** (líneas 1052-1055):
+  - Antes: "6-10 experimentos... al menos 2 ETHUSDT, 1 SOLUSDT"
+  - Ahora: "exactamente 9 experimentos... exactamente 3 BTCUSDT, 3 ETHUSDT, 3 SOLUSDT"
+- **Cambio 2 — Enforcement post-LLM** (líneas 1092-1115):
+  - Si LLM ignora instrucción, code redistribuye automáticamente
+  - Máximo 3 experiments por moneda garantizado
+  - Si moneda queda vacía, completa con copia de otra
+- **Tests ejecutados**: 3 ciclos consecutivos — consistente 9 experiments encolados ✅
+
+**Documentación actualizada:**
+- TASK.md: marcado verificación n8n ✅, agregado ítem distribución 3-3-3 ✅
+- Último update: 2026-04-16
+
+### Decisiones tomadas
+- Mantener Main Loop a cada 15min (no cambiar a 30min hasta aviso)
+- Enforcement de distribución en código, no en prompt (más robusto)
+
+### Próximos pasos
+- Monitorear 24-48h distribución 3-3-3: verificar que sea efectiva en ciclos autónomos
+- Si surge estancamiento nuevamente: revisar prompt agresividad de exploración
+- Considerar cambiar cron a 30min cuando el sistema "cruise" sin mejoras visibles
+
+### Estado del sistema al cierre
+| Componente | Estado |
+|------------|--------|
+| autolab-api | ✅ UP — último deploy commit `d164cd3` |
+| n8n Main Loop | ✅ 15min, ejecuciones exitosas |
+| Ciclo autónomo | ✅ Distribución 3-3-3 (BTC/ETH/SOL) encolando consistente |
+| Queue | 9,951 done | 384 failed |
+| Champion (BTC) | `vwap_pullback` — $338.30 — Sharpe 1.593 |
+| Champion (ETH) | `breakout` — $360.04 — Sharpe 1.632 |
+| Champion (SOL) | `vwap_pullback` — $344.14 — Sharpe 1.827 |
+| Learnings recientes | 4 guardados en BATCH_20260416_055447 ✅ |
+| GitHub | 2 commits nuevos: `d164cd3` + `8304b41` |
+
+---
+
 ## 2026-04-12 — Sesión mayor: estancamiento, análisis profundo, multi-moneda, frontend
 
 ### Contexto

@@ -1049,10 +1049,11 @@ async def hypothesize():
         "Análisis previo:\n" + json.dumps(analysis) +
         champion_section +
         external_section +
-        f"\n\nGenerá 6-10 experimentos para backtesting MULTI-COIN. "
+        f"\n\nGenerá exactamente 9 experimentos para backtesting MULTI-COIN. "
         f"Símbolos disponibles: {', '.join(ACTIVE_SYMBOLS)}. "
-        "Cada experimento DEBE incluir 'symbol' (ej: 'ETHUSDT'). "
-        "Incluí al menos 2 en ETHUSDT y 1 en SOLUSDT. Los demás pueden ser BTCUSDT.\n"
+        "Cada experimento DEBE incluir 'symbol'. "
+        "Distribución OBLIGATORIA: exactamente 3 en BTCUSDT, 3 en ETHUSDT y 3 en SOLUSDT. "
+        "No podés generar más de 3 experiments en ninguna moneda.\n"
         "Estrategias disponibles: breakout, vwap_pullback, mean_reversion, ema_crossover, breakdown_short, retest.\n"
         "NOTA: funding_reversion solo aplica a BTCUSDT.\n"
         "IMPORTANTE: Usá SOLO los params listados abajo. No inventés params que no estén en la lista.\n"
@@ -1087,6 +1088,31 @@ async def hypothesize():
     except Exception as e:
         print(f"[hypothesize] parse error: {e}")
         experiments = []
+
+    # Enforcement de distribución balanceada 3-3-3
+    # Si el LLM no respetó la instrucción, redistribuir los experiments
+    if experiments:
+        from collections import defaultdict
+        by_symbol = defaultdict(list)
+        for exp in experiments:
+            sym = exp.get("symbol", "BTCUSDT")
+            if sym not in ACTIVE_SYMBOLS:
+                sym = "BTCUSDT"
+            by_symbol[sym].append(exp)
+
+        balanced = []
+        for sym in ACTIVE_SYMBOLS:
+            balanced.extend(by_symbol[sym][:3])  # máximo 3 por moneda
+
+        # Si alguna moneda tiene 0 experiments, completar con copia de otra
+        for sym in ACTIVE_SYMBOLS:
+            sym_exps = [e for e in balanced if e.get("symbol") == sym]
+            if not sym_exps and balanced:
+                donor = {**balanced[0], "symbol": sym}
+                balanced.append(donor)
+
+        experiments = balanced
+        print(f"[hypothesize] distribución enforcement: {len(experiments)} experiments balanceados (3-3-3)")
 
     REQUIRED = {
         "breakout": ["lookback","vol_ratio_min","atr_period","sl_atr_mult","trail_atr_mult","ema_trend_period","ema_trend_daily_period","adx_filter","breakeven_after_r"],

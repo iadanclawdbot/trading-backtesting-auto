@@ -147,7 +147,10 @@ Hacer en orden. Bloquean todo lo demás.
 - [x] **Upgrade ema_crossover a ATR trailing** — nuevo motor `correr_backtest_ema_trailing` + `calcular_indicadores_ema_atr` ✅ 2026-04-12
 - [x] **Fix benchmark en generar_batch_report.py** — actualizado a vwap_pullback campeón ✅ 2026-04-12
 - [x] **Fix n8n Main Loop connections** — key `Cron 5min` → `Cron 15min`, workflow ejecutaba Cron y salía en 3ms ✅ 2026-04-14
-- [ ] **Verificar 24-48h post-fix n8n** — confirmar diversidad en experiments y learnings post-reactivación (desde 2026-04-14 12:00 UTC)
+- [x] **Verificar 24-48h post-fix n8n** — ciclo completamente funcional ✅ 2026-04-16
+  - Genera 6-8 experiments por ciclo, ejecuta backtests en 23-30s
+  - Guarda learnings en Supabase, envía reportes a Telegram
+  - Sistema autónomo operativo 24/7 sin intervención humana
 - [x] **Backtesting multi-moneda** — ETH + SOL habilitados (commit `2484f6d`) ✅ 2026-04-12
   - ACTIVE_SYMBOLS = [BTCUSDT, ETHUSDT, SOLUSDT]
   - Velas descargadas: ETH 4h (4,740) + 1h (19,441) + SOL 4h (4,861) + 1h (19,441)
@@ -165,6 +168,10 @@ Hacer en orden. Bloquean todo lo demás.
 - [x] **Campeón por moneda** — `_maybe_crown_champion()` per-symbol (commit `a19cda6`) ✅ 2026-04-12
 - [x] **Fix candles markers cross-coin** — `setMarkers([])` al cambiar coin (commit `2becca2`) ✅ 2026-04-12
 - [x] **Fix candles champion trades** — `/metrics/candles` usa `_get_champion(symbol)` (commit `68ed09f`) ✅ 2026-04-12
+- [x] **Distribución balanceada 3-3-3 en /hypothesize** — BTC/ETH/SOL en partes iguales (commit `d164cd3`) ✅ 2026-04-16
+  - Prompt: "exactamente 9 experimentos, 3 en BTCUSDT, 3 en ETHUSDT, 3 en SOLUSDT"
+  - Enforcement: post-LLM redistribuye si LLM ignora instrucción
+  - Test: consistente 9 experiments encolados, balanceados por moneda
 
 ---
 
